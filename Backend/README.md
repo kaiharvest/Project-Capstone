@@ -63,6 +63,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 >>>>>>> 6d0d751 (test staging)
 # Project-Capstone
 
+<<<<<<< HEAD
 Proyek backend untuk aplikasi Capstone yang dibangun menggunakan Laravel.
 
 ## Fitur API
@@ -174,3 +175,5 @@ Sistem autentikasi menggunakan Laravel Sanctum untuk otentikasi berbasis token.
       "message": "Unauthenticated."
   }
   ```
+=======
+>>>>>>> 3f16384 (test)
