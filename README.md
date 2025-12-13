@@ -58,3 +58,78 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 # Project-Capstone
+
+Proyek backend untuk aplikasi Capstone yang dibangun menggunakan Laravel.
+
+## Fitur API
+
+### 1. Autentikasi
+
+Sistem autentikasi menggunakan Laravel Sanctum untuk otentikasi berbasis token.
+
+#### Registrasi User Baru
+
+- **Endpoint:** `POST /api/register`
+- **Deskripsi:** Mendaftarkan pengguna baru ke dalam sistem.
+- **Body Request:**
+  ```json
+  {
+      "name": "Nama Lengkap",
+      "alamat": "Alamat Pengguna",
+      "no_telpon": "081234567890",
+      "email": "user@example.com",
+      "password": "password_minimal_8_karakter",
+      "password_confirmation": "password_minimal_8_karakter"
+  }
+  ```
+- **Respon Sukses (201):**
+  ```json
+  {
+      "message": "Registrasi berhasil!",
+      "access_token": "{api_token}",
+      "token_type": "Bearer",
+      "user": { ... }
+  }
+  ```
+
+#### Login User
+
+- **Endpoint:** `POST /api/login`
+- **Deskripsi:** Mengautentikasi pengguna dan memberikan token akses.
+- **Body Request:**
+  ```json
+  {
+      "email": "user@example.com",
+      "password": "password_anda"
+  }
+  ```
+- **Respon Sukses (200):**
+  ```json
+  {
+      "message": "Login berhasil!",
+      "access_token": "{api_token}",
+      "token_type": "Bearer",
+      "user": { ... }
+  }
+  ```
+
+### 2. Pengguna (User)
+
+#### Mendapatkan Data User Terotentikasi
+
+- **Endpoint:** `GET /api/user`
+- **Deskripsi:** Mengambil data pengguna yang sedang login/terotentikasi.
+- **Header:**
+  ```
+  Authorization: Bearer {api_token}
+  Accept: application/json
+  ```
+- **Respon Sukses (200):**
+  ```json
+  {
+      "id": 1,
+      "name": "Nama Lengkap",
+      "email": "user@example.com",
+      // ... data pengguna lainnya
+  }
+  ```
