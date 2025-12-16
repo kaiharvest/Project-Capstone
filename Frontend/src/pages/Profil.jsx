@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api"; // Sesuaikan dengan base URL API backend Anda
+const API_BASE_URL = "http://127.0.0.1:8000/api";
 
 const Profil = () => {
-  const navigate = useNavigate(); // Inisialisasi useNavigate
+  const navigate = useNavigate();
 
   // State untuk autentikasi
   const [token, setToken] = useState(localStorage.getItem("access_token") || null);
   const [isLoggedIn, setIsLoggedIn] = useState(!!token);
   const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null); // Untuk pesan sukses/info
-  const [isRegistering, setIsRegistering] = useState(false); // State untuk toggle form login/register
+  const [message, setMessage] = useState(null);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   // State untuk form Login
   const [loginEmail, setLoginEmail] = useState("");
@@ -71,14 +71,18 @@ const Profil = () => {
         throw new Error(`Gagal mengambil data profil. Status: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log("Received profile data:", data); // Logging data yang diterima
-      setUser(data);
+      const responseData = await response.json();
+      console.log("Received profile data:", responseData); // Logging data yang diterima
+      
+      // Handle wrapped responses (e.g., { data: { ... } } or { user: { ... } }) or direct user object
+      const userData = responseData.data || responseData.user || responseData;
+
+      setUser(userData);
       setProfileFormData({
-        name: data.name,
-        alamat: data.alamat,
-        no_telpon: data.no_telpon,
-        email: data.email,
+        name: userData.name,
+        alamat: userData.alamat,
+        no_telpon: userData.no_telpon,
+        email: userData.email,
       });
       setError(null);
     } catch (err) {
@@ -112,12 +116,10 @@ const Profil = () => {
 
       const data = await response.json();
       localStorage.setItem("access_token", data.access_token);
-      setToken(data.access_token);
-      setIsLoggedIn(true);
+      setToken(data.access_token); // This will trigger the useEffect to fetch the profile
       setLoginEmail("");
       setLoginPassword("");
       setMessage("Login berhasil!");
-      fetchUserProfile(data.access_token);
     } catch (err) {
       console.error("Error during login:", err);
       setError(err.message);
