@@ -4,6 +4,12 @@ use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController; // Import AuthController
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\TransactionController;
+use App\Http\Controllers\Admin\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,13 +32,31 @@ Route::middleware('auth:sanctum')->put('/user/profile', [AuthController::class, 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-    Route::get('/admin/dashboard', function () {
-        return response()->json([
-            'message' => 'Welcome admin'
-        ]);
-    });
-    
+Route::middleware(['auth:sanctum','admin'])->prefix('admin')->group(function(){
+Route::get('/settings', [SettingsController::class,'show']);
+Route::put('/settings', [SettingsController::class,'update']);
+
+
+Route::apiResource('users', UserController::class);
+
+
+Route::apiResource('products', ProductController::class);
+
+
+Route::get('orders', [OrderController::class,'index']);
+Route::get('orders/{id}', [OrderController::class,'show']);
+Route::post('orders/{id}/status', [OrderController::class,'updateStatus']);
+Route::post('orders/{id}/proof', [OrderController::class,'uploadProof']);
+
+
+Route::get('transactions', [TransactionController::class,'index']);
+Route::get('transactions/{id}', [TransactionController::class,'show']);
+Route::post('transactions/{id}/status', [TransactionController::class,'updateStatus']);
+
+
+Route::get('reports/finance', [ReportController::class,'finance']);
 });
+    
+
 
 
