@@ -69,11 +69,6 @@ class AuthController extends Controller
 
         
         $user = Auth::user(); // Get the authenticated user
-        if ($user->role !== 'admin') {
-           return response()->json([
-               'message' => 'Akses ditolak, bukan admin'
-           ], 403);
-       }
         $token = $user->createToken('auth_token')->plainTextToken; // Generate a token
 
         return response()->json([
