@@ -7,6 +7,7 @@ import emblem from "../assets/icons/emblem.svg";
 import jaket from "../assets/icons/jaket.svg";
 import tas from "../assets/icons/tas.svg";
 import dummyImg from "../assets/dummy/profil.png";
+import Footer from "../components/Footer";
 
 export default function Pesan() {
   const [layanan, setLayanan] = useState("Bordir Seragam");
@@ -174,6 +175,7 @@ export default function Pesan() {
 
         </div>
       </section>
+      
     </div>
   );
 }

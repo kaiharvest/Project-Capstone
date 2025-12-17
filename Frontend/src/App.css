@@ -1,3 +1,17 @@
+/* app.css - Tailwind v4: CSS-first config example */
+@import "tailwindcss";
+
+/* definisikan theme variables (Tailwind v4 CSS-first feature) */
+@theme {
+  /* contoh override / definisi warna custom */
+  --color-orange-600: #f97316; /* orange-500/600 feel - ganti sesuai selera */
+  /* radius custom (opsional) */
+  --radius-3xl: 1.5rem;
+}
+
+/* kamu tetap bisa menambahkan style tambahan jika perlu */
+
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -40,3 +54,4 @@
 .read-the-docs {
   color: #888;
 }
+

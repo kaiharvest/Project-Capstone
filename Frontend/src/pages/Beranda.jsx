@@ -63,7 +63,7 @@ export default function Beranda() {
         />
 
         {/* Text */}
-        <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-20 text-white">
+        <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-20 ml-6 text-white">
           <h2 className="text-2xl md:text-4xl font-bold font-[Palanquin_Dark]">
             Selamat datang di
           </h2>
@@ -205,7 +205,7 @@ export default function Beranda() {
         </div>
       </section>
 
-      <Footer />
+      
     </>
   );
 }
