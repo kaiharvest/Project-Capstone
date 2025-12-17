@@ -25,3 +25,14 @@ Route::middleware('auth:sanctum')->put('/user/profile', [AuthController::class, 
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::get('/admin/dashboard', function () {
+        return response()->json([
+            'message' => 'Welcome admin'
+        ]);
+    });
+    
+});
+
+

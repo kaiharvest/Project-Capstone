@@ -3,7 +3,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Middleware\HandleCors; // Import middleware HandleCors
+use Illuminate\Http\Middleware\HandleCors;
+use App\Http\Middleware\AdminOnly;
+ // Import middleware HandleCors
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Terapkan HandleCors hanya ke grup middleware API
         $middleware->group('api', [HandleCors::class]);
+         $middleware->alias([
+            'admin' => AdminOnly::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
