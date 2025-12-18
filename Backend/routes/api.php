@@ -31,6 +31,8 @@ Route::middleware('auth:sanctum')->put('/user/profile', [AuthController::class, 
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'verifyOtpAndResetPassword']);
 
 Route::middleware(['auth:sanctum','admin'])->prefix('admin')->group(function(){
 Route::get('/settings', [SettingsController::class,'show']);
