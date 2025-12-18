@@ -20,7 +20,7 @@ class AuthController extends Controller
                 'alamat' => 'required|string|max:255',
                 'no_telpon' => ['required', 'string', 'max:20', new IndonesianPhoneNumber()], // Use the custom rule
                 'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8|confirmed',
+                'password' => 'required|string|min:6|confirmed',
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -52,7 +52,7 @@ class AuthController extends Controller
         try {
             $request->validate([
                 'email' => 'required|string|email|max:255',
-                'password' => 'required|string|min:8',
+                'password' => 'required|string|min:6',
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -89,7 +89,7 @@ class AuthController extends Controller
                 'alamat' => 'required|string|max:255',
                 'no_telpon' => ['required', 'string', 'max:20', new IndonesianPhoneNumber()],
                 'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-                'password' => 'sometimes|required|string|min:8|confirmed', // Add password validation
+                'password' => 'sometimes|required|string|min:6|confirmed', // Add password validation
             ]);
         } catch (ValidationException $e) {
             return response()->json([
