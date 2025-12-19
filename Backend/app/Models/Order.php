@@ -16,6 +16,7 @@ class Order extends Model
      */
     protected $fillable = [
         'user_id',
+        'order_number', // nomor pemesanan unik
         'service_type',
         'embroidery_type',
         'size_cm',
@@ -39,6 +40,38 @@ class Order extends Model
         'total_price' => 'integer',
         'quantity' => 'integer',
     ];
+
+    /**
+     * Boot the model to set the order number automatically
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->order_number = static::generateUniqueOrderNumber();
+        });
+    }
+
+    /**
+     * Generate a unique order number
+     */
+    public static function generateUniqueOrderNumber()
+    {
+        $prefix = 'ORD';
+        $timestamp = now()->format('Ymd');
+        $random = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+
+        $orderNumber = $prefix . $timestamp . $random;
+
+        // Ensure uniqueness
+        while (self::where('order_number', $orderNumber)->exists()) {
+            $random = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+            $orderNumber = $prefix . $timestamp . $random;
+        }
+
+        return $orderNumber;
+    }
 
     /**
      * Relasi ke model User

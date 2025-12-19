@@ -5,34 +5,141 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
+
 class OrderController extends Controller
 {
-    public function index(Request $request) {
-// filter by status, user etc
-$q = Order::with('items.product','user');
-if ($request->filled('status')) $q->where('status',$request->status);
-return $q->paginate(20);
-}
+    /**
+     * Menampilkan daftar pesanan untuk admin
+     */
+    public function index(Request $request)
+    {
+        $query = Order::with('user'); // Include user information
 
+        // Filter by status if provided
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
-public function show($id) {
-return Order::with('items.product','transaction','user')->findOrFail($id);
-}
+        // Filter by user_id if provided
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
 
+        // Filter by order_type if provided
+        if ($request->filled('order_type')) {
+            $query->where('order_type', $request->order_type);
+        }
 
-public function updateStatus(Request $request,$id) {
-$order = Order::findOrFail($id);
-$data = $request->validate(['status'=>'required|in:pending,processing,completed,cancelled']);
-$order->update(['status'=>$data['status']]);
-return response()->json(['message'=>'Status updated','order'=>$order]);
-}
+        // Filter by date range if provided
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
 
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
 
-public function uploadProof(Request $request,$id) {
-$order = Order::findOrFail($id);
-$request->validate(['proof'=>'required']);
-// you can implement real file upload - for simplicity store base64 or path
-$order->update(['proof_image'=>$request->proof]);
-return response()->json(['message'=>'Proof uploaded']);
-}
+        return $query->orderBy('created_at', 'desc')->paginate(20);
+    }
+
+    /**
+     * Menampilkan detail pesanan
+     */
+    public function show($id)
+    {
+        return Order::with('user')->findOrFail($id);
+    }
+
+    /**
+     * Memperbarui status pesanan
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $data = $request->validate([
+            'status' => 'required|in:pending,processing,confirmed,cancelled,completed'
+        ]);
+
+        $order->update(['status' => $data['status']]);
+
+        return response()->json([
+            'message' => 'Status pesanan berhasil diperbarui.',
+            'order' => $order
+        ]);
+    }
+
+    /**
+     * Memperbarui total harga pesanan
+     */
+    public function updateTotalPrice(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $data = $request->validate([
+            'total_price' => 'required|numeric|min:0'
+        ]);
+
+        $order->update(['total_price' => $data['total_price']]);
+
+        return response()->json([
+            'message' => 'Total harga pesanan berhasil diperbarui.',
+            'order' => $order
+        ]);
+    }
+
+    /**
+     * Upload bukti pemesanan (admin bisa mengganti bukti jika diperlukan)
+     */
+    public function uploadProof(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $request->validate([
+            'proof_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
+        ]);
+
+        if ($request->hasFile('proof_image')) {
+            $image = $request->file('proof_image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('proofs', $imageName, 'public'); // Simpan di storage/app/public/proofs
+
+            $order->update([
+                'proof_image' => $imageName
+            ]);
+
+            return response()->json([
+                'message' => 'Bukti pemesanan berhasil diunggah.',
+                'order' => $order
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Gagal mengunggah bukti pemesanan.',
+        ], 400);
+    }
+
+    /**
+     * Menampilkan bukti pemesanan
+     */
+    public function showProof($id)
+    {
+        $order = Order::findOrFail($id);
+
+        if (!$order->proof_image) {
+            return response()->json([
+                'message' => 'Bukti pemesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        $path = storage_path('app/public/proofs/' . $order->proof_image);
+
+        if (!file_exists($path)) {
+            return response()->json([
+                'message' => 'File bukti pemesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->download($path);
+    }
 }

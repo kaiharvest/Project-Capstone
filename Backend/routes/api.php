@@ -34,6 +34,8 @@ Route::middleware('auth:sanctum')->put('/user/profile', [AuthController::class, 
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('orders', OrderController::class);
     Route::post('/orders/{id}/checkout-from-cart', [OrderController::class, 'checkoutFromCart']);
+    Route::post('/orders/{id}/upload-proof', [OrderController::class, 'uploadProof']);
+    Route::get('/orders/{id}/proof', [OrderController::class, 'showProof']);
 });
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -55,7 +57,9 @@ Route::apiResource('products', ProductController::class);
 Route::get('orders', [AdminOrderController::class,'index']);
 Route::get('orders/{id}', [AdminOrderController::class,'show']);
 Route::post('orders/{id}/status', [AdminOrderController::class,'updateStatus']);
+Route::post('orders/{id}/price', [AdminOrderController::class,'updateTotalPrice']);
 Route::post('orders/{id}/proof', [AdminOrderController::class,'uploadProof']);
+Route::get('orders/{id}/proof', [AdminOrderController::class,'showProof']);
 
 
 Route::get('transactions', [TransactionController::class,'index']);

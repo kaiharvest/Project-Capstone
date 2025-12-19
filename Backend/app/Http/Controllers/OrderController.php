@@ -14,13 +14,25 @@ class OrderController extends Controller
     /**
      * Menampilkan semua pesanan milik user yang login
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
-        $orders = Order::where('user_id', $user->id)
-                      ->orderBy('created_at', 'desc')
+
+        $query = Order::where('user_id', $user->id);
+
+        // Filter berdasarkan status jika disediakan
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter berdasarkan order_type jika disediakan
+        if ($request->has('order_type') && !empty($request->order_type)) {
+            $query->where('order_type', $request->order_type);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')
                       ->paginate(10);
-        
+
         return response()->json($orders);
     }
 
@@ -93,10 +105,17 @@ class OrderController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $order = Order::where('id', $id)
-                      ->where('user_id', $user->id)
-                      ->firstOrFail();
-        
+
+        // Jika user adalah admin, mereka bisa mengakses semua pesanan
+        if ($user->isAdmin()) {
+            $order = Order::findOrFail($id);
+        } else {
+            // Jika bukan admin, hanya bisa mengakses pesanan miliknya sendiri
+            $order = Order::where('id', $id)
+                          ->where('user_id', $user->id)
+                          ->firstOrFail();
+        }
+
         return response()->json($order);
     }
 
@@ -192,6 +211,68 @@ class OrderController extends Controller
             'message' => 'Pesanan berhasil di-checkout dari keranjang.',
             'order' => $order
         ]);
+    }
+
+    /**
+     * Upload bukti pemesanan
+     */
+    public function uploadProof(Request $request, $id)
+    {
+        $user = Auth::user();
+        $order = Order::where('id', $id)
+                      ->where('user_id', $user->id)
+                      ->firstOrFail();
+
+        $request->validate([
+            'proof_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
+        ]);
+
+        if ($request->hasFile('proof_image')) {
+            $image = $request->file('proof_image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('proofs', $imageName, 'public'); // Simpan di storage/app/public/proofs
+
+            $order->update([
+                'proof_image' => $imageName,
+                'status' => 'processing' // Ubah status menjadi processing setelah upload bukti
+            ]);
+
+            return response()->json([
+                'message' => 'Bukti pemesanan berhasil diunggah.',
+                'order' => $order
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Gagal mengunggah bukti pemesanan.',
+        ], 400);
+    }
+
+    /**
+     * Menampilkan bukti pemesanan
+     */
+    public function showProof($id)
+    {
+        $user = Auth::user();
+        $order = Order::where('id', $id)
+                      ->where('user_id', $user->id)
+                      ->firstOrFail();
+
+        if (!$order->proof_image) {
+            return response()->json([
+                'message' => 'Bukti pemesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        $path = storage_path('app/public/proofs/' . $order->proof_image);
+
+        if (!file_exists($path)) {
+            return response()->json([
+                'message' => 'File bukti pemesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->download($path);
     }
 
     /**
