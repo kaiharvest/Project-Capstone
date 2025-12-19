@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,20 +12,58 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            // Menambahkan kolom-kolom yang diperlukan untuk fitur pemesanan bordir
-            $table->string('service_type')->nullable(); // Jenis layanan bordir
-            $table->string('embroidery_type')->nullable(); // Jenis bordir
-            $table->decimal('size_cm', 8, 2)->nullable(); // Ukuran bordir dalam cm
-            $table->integer('quantity')->nullable(); // Jumlah pesanan
-            $table->string('shipping_method')->nullable(); // Ekspedisi pengiriman
-            $table->text('shipping_address')->nullable(); // Alamat pengiriman
-            $table->string('order_type')->default('now'); // Pesan sekarang atau simpan ke keranjang
-            $table->text('notes')->nullable(); // Catatan tambahan dari user
+        // Periksa apakah kolom sudah ada sebelum menambahkan
+        $columnsToAdd = [
+            'service_type',
+            'embroidery_type',
+            'size_cm',
+            'quantity',
+            'shipping_method',
+            'shipping_address',
+            'order_type',
+            'notes'
+        ];
 
-            // Update kolom status dengan enum yang sesuai
-            $table->enum('status', ['pending', 'processing', 'confirmed', 'cancelled', 'cart'])->default('pending')->change();
-        });
+        foreach ($columnsToAdd as $column) {
+            $columnExists = DB::select("SHOW COLUMNS FROM orders LIKE '$column'");
+            if (empty($columnExists)) {
+                Schema::table('orders', function (Blueprint $table) use ($column) {
+                    if ($column === 'service_type' || $column === 'embroidery_type' || $column === 'shipping_method' || $column === 'order_type') {
+                        $table->string($column)->nullable();
+                    } elseif ($column === 'size_cm') {
+                        $table->decimal('size_cm', 8, 2)->nullable();
+                    } elseif ($column === 'quantity') {
+                        $table->integer('quantity')->nullable();
+                    } elseif ($column === 'shipping_address') {
+                        $table->text('shipping_address')->nullable();
+                    } elseif ($column === 'notes') {
+                        $table->text('notes')->nullable();
+                    }
+                });
+            }
+        }
+
+        // Update enum status jika belum diupdate
+        $statusColumn = DB::select("SHOW COLUMNS FROM orders WHERE Field = 'status'");
+        if (!empty($statusColumn)) {
+            $type = $statusColumn[0]->Type;
+
+            // Cek apakah enum status sudah termasuk 'cart' dan 'confirmed'
+            if (strpos($type, 'cart') === false || strpos($type, 'confirmed') === false) {
+                // Update data lama sebelum mengganti enum status
+                DB::statement("ALTER TABLE orders MODIFY COLUMN status VARCHAR(20) DEFAULT 'pending'");
+                // Update semua status 'completed' ke 'confirmed' agar tidak hilang
+                DB::table('orders')->where('status', 'completed')->update(['status' => 'confirmed']);
+
+                // Ganti status column dengan enum baru
+                DB::statement("ALTER TABLE orders MODIFY COLUMN status ENUM('pending', 'processing', 'confirmed', 'cancelled', 'cart') NOT NULL DEFAULT 'pending'");
+            }
+        } else {
+            // Jika kolom status tidak ditemukan, buat dengan enum baru
+            Schema::table('orders', function (Blueprint $table) {
+                $table->enum('status', ['pending', 'processing', 'confirmed', 'cancelled', 'cart'])->default('pending');
+            });
+        }
     }
 
     /**
@@ -32,21 +71,32 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            // Menghapus kolom-kolom yang ditambahkan
-            $table->dropColumn([
-                'service_type',
-                'embroidery_type',
-                'size_cm',
-                'quantity',
-                'shipping_method',
-                'shipping_address',
-                'order_type',
-                'notes'
-            ]);
+        // Ganti dulu status 'confirmed' ke 'completed' agar konsisten dengan enum lama
+        DB::statement("ALTER TABLE orders MODIFY COLUMN status VARCHAR(20) DEFAULT 'pending'");
+        DB::table('orders')->where('status', 'confirmed')->update(['status' => 'completed']);
 
-            // Kembalikan kolom status ke enum asli
-            $table->enum('status', ['pending', 'processing', 'completed', 'cancelled'])->default('pending')->change();
-        });
+        // Hanya hapus kolom jika kolom tersebut ada
+        $columnsToDrop = [
+            'service_type',
+            'embroidery_type',
+            'size_cm',
+            'quantity',
+            'shipping_method',
+            'shipping_address',
+            'order_type',
+            'notes'
+        ];
+
+        foreach ($columnsToDrop as $column) {
+            $columnExists = DB::select("SHOW COLUMNS FROM orders LIKE ?", [$column]);
+            if (!empty($columnExists)) {
+                Schema::table('orders', function (Blueprint $table) use ($column) {
+                    $table->dropColumn($column);
+                });
+            }
+        }
+
+        // Kembalikan kolom status ke enum asli
+        DB::statement("ALTER TABLE orders MODIFY COLUMN status ENUM('pending', 'processing', 'completed', 'cancelled') NOT NULL DEFAULT 'pending'");
     }
 };
