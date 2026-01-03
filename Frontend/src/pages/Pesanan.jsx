@@ -65,7 +65,7 @@ export default function Pesanan() {
       {/* ===== MAIN CONTENT ===== */}
       <main className="flex-1 px-6 py-10">
         <div className="max-w-6xl mx-auto">
-          {/* TABS */}
+          {/* TABS */} 
           <div className="flex gap-4 mb-8">
             {TABS.map((tab) => {
               const active = activeTab === tab.key;
@@ -75,9 +75,7 @@ export default function Pesanan() {
                   onClick={() => setActiveTab(tab.key)}
                   style={active && tab.color ? { backgroundColor: tab.color } : {}}
                   className={`px-5 py-2 rounded-full font-semibold transition ${
-                    active
-                      ? "text-black"
-                      : "bg-slate-200 text-slate-500"
+                    active ? "text-black" : "bg-slate-200 text-slate-500"
                   }`}
                 >
                   {tab.label}
@@ -99,9 +97,9 @@ export default function Pesanan() {
                     Nomor Pemesanan
                   </label>
                   <input
-                  readOnly
-                  value={orderNumber}
-                  className="w-full rounded-full px-6 py-3 bg-white shadow-sm border border-white/60"
+                    readOnly
+                    value={orderNumber}
+                    className="w-full rounded-full px-6 py-3 bg-white shadow-sm border border-white/60"
                   />
                 </div>
 
@@ -112,11 +110,11 @@ export default function Pesanan() {
 
                   <div className="flex gap-3">
                     <input
-                    readOnly
-                    value={proofFileName}
-                    placeholder="Belum ada bukti"
-                    className="flex-1 rounded-full px-6 py-3 bg-white shadow-sm border border-white/60"
-                  />
+                      readOnly
+                      value={proofFileName}
+                      placeholder="Belum ada bukti"
+                      className="flex-1 rounded-full px-6 py-3 bg-white shadow-sm border border-white/60"
+                    />
 
                     <button
                       onClick={() =>
@@ -151,9 +149,7 @@ export default function Pesanan() {
                   !proofFileUrl && "opacity-60 cursor-default"
                 }`}
               >
-                <span className="font-semibold text-gray-600">
-                  Lihat File
-                </span>
+                <span className="font-semibold text-gray-600">Lihat File</span>
               </div>
             </div>
           </div>
@@ -171,7 +167,6 @@ export default function Pesanan() {
       </main>
 
       {/* ===== FOOTER (FIXED POSITION) ===== */}
-     
 
       {/* ===== MODAL PREVIEW ===== */}
       {showPreview && (
@@ -204,6 +199,8 @@ export default function Pesanan() {
           </div>
         </div>
       )}
+
+      <Footer />
     </div>
   );
 }

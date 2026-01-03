@@ -175,7 +175,7 @@ export default function Pesan() {
 
         </div>
       </section>
-      
+      <Footer />
     </div>
   );
 }
