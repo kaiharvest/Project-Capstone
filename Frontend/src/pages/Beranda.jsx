@@ -181,22 +181,29 @@ export default function Beranda() {
         </div>
 
         <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-          {[porto, porto1, porto2, porto3, porto4, porto5, porto6, porto7].map(
-            (img, i) => (
+            {[
+              porto,
+              porto1,
+              porto2,
+              porto3,
+              porto4,
+              porto5,
+              porto6,
+              porto7,
+            ].map((img, i) => (
               <div
                 key={i}
-                className="relative rounded-2xl overflow-hidden bg-white shadow-[0_12px_28px_rgba(0,0,0,0.55)]"
+                className="relative rounded-2xl overflow-hidden aspect-[4/3]"
               >
                 <img
                   src={img}
                   alt={`Portofolio ${i + 1}`}
-                  className="w-full h-40 md:h-48 object-cover"
+                  className="w-140 h-65 object-cover block"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
               </div>
-            )
-          )}
-        </div>
+            ))}
+          </div>
 
         <div className="flex justify-center mt-10">
           <button className="bg-[#3E7CB1] hover:bg-[#356a99] text-white font-semibold px-10 py-3 rounded-lg shadow-lg transition">
@@ -205,7 +212,7 @@ export default function Beranda() {
         </div>
       </section>
 
-      
+      <Footer />
     </>
   );
 }
