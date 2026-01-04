@@ -1,25 +1,34 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import logo from "../assets/logo.png";
 import searchIcon from "../assets/icons/search.svg";
 import cartIcon from "../assets/icons/shop.svg";
-import userIcon from "../assets/icons/user.svg";
+// import userIcon from "../assets/icons/user.svg"; // Tidak lagi diperlukan jika menggunakan teks "Login"
 
 export default function Navbar() {
   const activeClass = "text-white";
   const normalClass = "hover:text-white";
 
+  // Kita tidak lagi butuh userActiveClass dan userNormalClass karena kita akan menggunakan button teks
   // khusus icon user (biar keliatan nyala)
-  const userActiveClass = "bg-orange-500 p-2 rounded-full";
-  const userNormalClass = "p-2 rounded-full hover:opacity-90";
+  // const userActiveClass = "bg-orange-500 p-2 rounded-full";
+  // const userNormalClass = "p-2 rounded-full hover:opacity-90";
 
   const { pathname } = useLocation();
 
-  // anggap semua halaman auth itu "user active"
-  const isAuthPage =
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname.startsWith("/auth"); // optional kalau nanti kamu bikin /auth/...
+  const [loggedInUser, setLoggedInUser] = useState(null);
+
+  useEffect(() => {
+    // Memeriksa status login saat komponen di-mount
+    const token = localStorage.getItem("access_token");
+    const user = localStorage.getItem("user");
+    if (token && user) {
+      setLoggedInUser(JSON.parse(user));
+    } else {
+      setLoggedInUser(null);
+    }
+  }, [pathname]); // Jalankan ulang effect jika pathname berubah (misal setelah login/logout)
+
 
   return (
     <nav className="bg-[#010E31] text-[#81A4CD] shadow-md">
@@ -99,13 +108,22 @@ export default function Navbar() {
             />
           </Link>
 
-          {/* USER (active untuk /login & /register) */}
-          <Link
-            to="/login"
-            className={isAuthPage ? userActiveClass : userNormalClass}
-          >
-            <img src={userIcon} alt="User" className="w-5" />
-          </Link>
+          {/* Login Button / User Profile Link */}
+          {loggedInUser ? (
+            <Link
+              to="/akun"
+              className="text-white bg-orange-500 hover:bg-orange-600 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200"
+            >
+              {loggedInUser.name}
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="bg-[#3E78A9] text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#326188] transition-colors duration-200"
+            >
+              Login
+            </Link>
+          )}
         </div>
       </div>
     </nav>

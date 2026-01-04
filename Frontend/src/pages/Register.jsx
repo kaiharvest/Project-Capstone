@@ -1,10 +1,22 @@
 // src/pages/Register.jsx
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../services/api"; // Import a service API
+import toast from 'react-hot-toast'; // Import toast
 
 export default function Register() {
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // State untuk semua field form
+  const [name, setName] = useState('');
+  const [no_telpon, setNoTelpon] = useState('');
+  const [email, setEmail] = useState('');
+  const [alamat, setAlamat] = useState('');
+  const [password, setPassword] = useState('');
+  const [password_confirmation, setPasswordConfirmation] = useState('');
+  
+  const navigate = useNavigate();
 
   // Biar yang bisa scroll cuma kolom kanan (bukan halaman)
   useEffect(() => {
@@ -15,8 +27,47 @@ export default function Register() {
     };
   }, []);
 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    
+    // Validasi sisi klien sederhana
+    if (password !== password_confirmation) {
+      toast.error("Konfirmasi password tidak cocok.");
+      return;
+    }
+
+    try {
+      // Panggil API register
+      await api.post('/register', {
+        name,
+        no_telpon,
+        email,
+        alamat,
+        password,
+        password_confirmation,
+      });
+
+      // Jika berhasil, tampilkan notifikasi
+      toast.success('Registrasi berhasil! Anda akan diarahkan ke halaman login.');
+      
+      // Arahkan ke halaman login setelah beberapa saat
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000); // Tunggu 2 detik
+      
+    } catch (err) {
+      // Tangani error validasi dari backend
+      if (err.response && err.response.data && err.response.data.errors) {
+        const errorMessages = Object.values(err.response.data.errors).flat();
+        toast.error(errorMessages.join('\n'));
+      } else {
+        toast.error("Terjadi kesalahan. Silakan coba lagi.");
+      }
+      console.error("Registration error:", err.response || err);
+    }
+  };
+
   return (
-   
       <div className="h-[calc(100vh-74px)] w-full flex overflow-hidden">
       {/* LEFT SIDE (FIX / TIDAK SCROLL) */}
       <div className="w-1/2 h-full bg-[#010E31] px-20 py-10 flex flex-col justify-center overflow-hidden">
@@ -37,6 +88,7 @@ export default function Register() {
           seragam, logo, nama, hingga desain khusus sesuai permintaan. Dengan
           dukungan pengalaman dan peralatan yang memadai, JA Bordir berkomitmen
           memberikan hasil yang rapi, kuat, dan estetik. Setiap pesanan bagi
+
           kami adalah amanah, sehingga kami selalu mengerjakannya dengan penuh
           perhatian serta tanggung jawab.
         </p>
@@ -51,7 +103,7 @@ export default function Register() {
               REGISTER
             </h1>
 
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleRegister}>
               {/* Nama */}
               <div>
                 <label className="block text-[11px] font-semibold text-gray-500 mb-2">
@@ -61,6 +113,9 @@ export default function Register() {
                   type="text"
                   placeholder="Masukkan nama anda"
                   className="w-full h-10 rounded-full bg-white px-5 text-sm text-gray-700 placeholder:text-gray-300 shadow-md border border-gray-200 outline-none"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
                 />
               </div>
 
@@ -73,6 +128,9 @@ export default function Register() {
                   type="text"
                   placeholder="Masukkan nomor telepon anda"
                   className="w-full h-10 rounded-full bg-white px-5 text-sm text-gray-700 placeholder:text-gray-300 shadow-md border border-gray-200 outline-none"
+                  value={no_telpon}
+                  onChange={(e) => setNoTelpon(e.target.value)}
+                  required
                 />
               </div>
 
@@ -85,6 +143,9 @@ export default function Register() {
                   type="email"
                   placeholder="Masukkan email anda"
                   className="w-full h-10 rounded-full bg-white px-5 text-sm text-gray-700 placeholder:text-gray-300 shadow-md border border-gray-200 outline-none"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
 
@@ -97,18 +158,9 @@ export default function Register() {
                   type="text"
                   placeholder="Masukkan alamat anda"
                   className="w-full h-10 rounded-full bg-white px-5 text-sm text-gray-700 placeholder:text-gray-300 shadow-md border border-gray-200 outline-none"
-                />
-              </div>
-
-              {/* Username */}
-              <div>
-                <label className="block text-[11px] font-semibold text-gray-500 mb-2">
-                  Username:
-                </label>
-                <input
-                  type="text"
-                  placeholder="Masukkan username anda"
-                  className="w-full h-10 rounded-full bg-white px-5 text-sm text-gray-700 placeholder:text-gray-300 shadow-md border border-gray-200 outline-none"
+                  value={alamat}
+                  onChange={(e) => setAlamat(e.target.value)}
+                  required
                 />
               </div>
 
@@ -122,6 +174,9 @@ export default function Register() {
                     type={showPass ? "text" : "password"}
                     placeholder="Masukkan password anda"
                     className="flex-1 text-sm text-gray-700 placeholder:text-gray-300 outline-none bg-transparent"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                   />
                   <button
                     type="button"
@@ -161,6 +216,9 @@ export default function Register() {
                     type={showConfirm ? "text" : "password"}
                     placeholder="Masukkan password anda"
                     className="flex-1 text-sm text-gray-700 placeholder:text-gray-300 outline-none bg-transparent"
+                    value={password_confirmation}
+                    onChange={(e) => setPasswordConfirmation(e.target.value)}
+                    required
                   />
                   <button
                     type="button"
@@ -189,7 +247,7 @@ export default function Register() {
                   </button>
                 </div>
               </div>
-
+              
               <button
                 type="submit"
                 className="w-full h-11 rounded-full bg-[#3E78A9] text-white font-semibold shadow-md mt-2"

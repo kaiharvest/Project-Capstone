@@ -1,8 +1,51 @@
 // src/pages/Login.jsx
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../services/api"; // Import a service API
+import toast from 'react-hot-toast'; // Import toast
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  // const [error, setError] = useState(null); // Tidak lagi diperlukan
+  const navigate = useNavigate();
+
+  // Fungsi untuk menangani proses login
+  const handleLogin = async (e) => {
+    e.preventDefault(); // Mencegah form dari submit default
+    // setError(null); // Tidak lagi diperlukan
+
+    try {
+      // Memanggil API untuk login
+      const response = await api.post("/login", {
+        email,
+        password,
+      });
+
+      // Jika berhasil, simpan token dan data pengguna
+      const { access_token, user } = response.data;
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("user", JSON.stringify(user));
+      
+      toast.success('Login berhasil!');
+
+      // Arahkan berdasarkan peran pengguna
+      if (user.role === "admin") {
+        console.log("Admin logged in, redirecting to home.");
+        navigate("/"); // Arahkan admin ke halaman utama
+      } else {
+        navigate("/akun"); // Arahkan pengguna biasa ke halaman akun
+      }
+    } catch (err) {
+      // Tangani error saat login
+      const errorMessage =
+        err.response?.data?.message || "Login gagal. Periksa kembali email dan password Anda.";
+      toast.error(errorMessage);
+      console.error("Login error:", err.response || err);
+    }
+  };
+
+
   return (
     // NOTE: 60px = tinggi navbar kamu (sesuaikan kalau beda)
     <div className="h-[calc(100vh-74px)] w-full flex overflow-hidden">
@@ -37,7 +80,7 @@ export default function Login() {
             LOGIN
           </h1>
 
-          <form className="space-y-5">
+          <form className="space-y-5" onSubmit={handleLogin}>
             {/* Email */}
             <div>
               <label className="block text-[11px] font-semibold text-gray-500 mb-2">
@@ -47,6 +90,9 @@ export default function Login() {
                 type="email"
                 placeholder="Masukkan email anda"
                 className="w-full h-10 rounded-full bg-white px-5 text-sm text-gray-700 placeholder:text-gray-300 shadow-md border border-gray-200 outline-none"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
 
@@ -59,9 +105,12 @@ export default function Login() {
                 type="password"
                 placeholder="Masukkan password anda"
                 className="w-full h-10 rounded-full bg-white px-5 text-sm text-gray-700 placeholder:text-gray-300 shadow-md border border-gray-200 outline-none"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
-
+            
             {/* BUTTON */}
             <button
               type="submit"
