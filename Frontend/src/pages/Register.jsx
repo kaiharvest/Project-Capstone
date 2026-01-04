@@ -69,29 +69,26 @@ export default function Register() {
 
   return (
       <div className="h-[calc(100vh-74px)] w-full flex overflow-hidden">
-      {/* LEFT SIDE (FIX / TIDAK SCROLL) */}
-      <div className="w-1/2 h-full bg-[#010E31] px-20 py-10 flex flex-col justify-center overflow-hidden">
-        <div className="leading-none">
-          <div className="text-white font-extrabold text-6xl tracking-tight flex items-center gap-2">
-            <span>JA</span>
-            <span className="w-3.5 h-3.5 rounded-full bg-[#F17300] inline-block translate-y-2" />
+      {/* LEFT SIDE - AESTHETIC PANEL */}
+      <div className="hidden lg:flex w-1/2 h-full bg-[#010E31] p-12 flex-col justify-center items-center text-center">
+        <div className="max-w-md">
+          {/* Logo */}
+          <div className="leading-none text-white font-black tracking-wider text-7xl">
+            <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">JA</span>
+            <span className="text-[#F17300] mx-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">•</span>
+            <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">Bordir</span>
           </div>
-          <div className="text-white font-extrabold text-6xl tracking-tight -mt-2">
-            Bordir
-          </div>
+
+          {/* Tagline/Motto */}
+          <h2 className="text-[#B9C6DA] font-medium text-lg mt-4 mb-6 drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
+            Kualitas dan Ketelitian dalam Setiap Jahitan
+          </h2>
+          
+          {/* Description */}
+          <p className="text-[#B9C6DA]/80 text-base leading-relaxed">
+            Dari seragam hingga desain custom, kami hadir untuk memberikan hasil bordir yang rapi, kuat, dan estetik. Setiap pesanan adalah amanah yang kami kerjakan dengan penuh tanggung jawab.
+          </p>
         </div>
-
-        <p className="text-[#B9C6DA] text-[14px] leading-5 mt-6 max-w-xs">
-          JA Bordir, tempat di mana kualitas dan ketelitian menjadi prioritas
-          utama dalam setiap hasil karya. Kami hadir untuk memenuhi kebutuhan
-          bordir Anda dengan layanan yang profesional, mulai dari bordir
-          seragam, logo, nama, hingga desain khusus sesuai permintaan. Dengan
-          dukungan pengalaman dan peralatan yang memadai, JA Bordir berkomitmen
-          memberikan hasil yang rapi, kuat, dan estetik. Setiap pesanan bagi
-
-          kami adalah amanah, sehingga kami selalu mengerjakannya dengan penuh
-          perhatian serta tanggung jawab.
-        </p>
       </div>
 
       {/* RIGHT SIDE (SEMUA ISI KANAN BISA SCROLL) */}
@@ -268,3 +265,4 @@ export default function Register() {
     </div>
   );
 }
+

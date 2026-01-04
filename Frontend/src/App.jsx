@@ -12,6 +12,8 @@ import Keranjang from "./pages/Keranjang";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Akun from "./pages/Akun"; // Import Akun component
+import ForgotPassword from "./pages/ForgotPassword"; // Import ForgotPassword component
+import ResetPassword from "./pages/ResetPassword"; // Import ResetPassword component
 
 function App() {
   return (
@@ -27,7 +29,9 @@ function App() {
         <Route path="/keranjang" element={<Keranjang />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/akun" element={<Akun />} /> {/* Add new route for Akun */}
+        <Route path="/akun" element={<Akun />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
       
     </>
