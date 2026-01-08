@@ -1,593 +1,151 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  UserCircle, 
-  Package, 
-  ShoppingCart, 
-  Box,
-  FileText,
-  LogOut,
-  BarChart3,
-  TrendingUp,
-  DollarSign,
-  Eye,
-  FileCheck,
-  Trash2,
-  Download
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { UserCircle, FileCheck } from 'lucide-react';
 
-// Mock data - nanti ganti dengan axios call ke Laravel backend
-const mockStats = {
-  totalTransactions: 67,
-  totalProducts: 500,
-  totalRevenue: 200000000,
-  totalUsers: 257
-};
-
-const mockSalesData = [
-  { month: 'Jan', sales: 45 },
-  { month: 'Feb', sales: 35 },
-  { month: 'Mar', sales: 60 },
-  { month: 'Apr', sales: 50 },
-  { month: 'Mei', sales: 40 },
-  { month: 'Jun', sales: 65 },
-  { month: 'Jul', sales: 55 },
-  { month: 'Agu', sales: 45 },
-  { month: 'Sep', sales: 70 },
-  { month: 'Okt', sales: 60 },
-  { month: 'Nov', sales: 50 },
-  { month: 'Des', sales: 75 }
-];
-
-const mockOrders = [
-  {
-    id: 'INV2025171212345',
-    customer: 'Budi Pertiwi',
-    address: 'RT 01/03, Kedungmundu, Tembalang, Semarang',
-    phone: '081234567890',
-    category: 'Bordir Topi',
-    type: 'Bordir 3D',
-    size: '20-24CM',
-    quantity: 20,
-    method: 'Pickup',
-    payment: 'Transfer BCA',
-    total: 1000000,
-    status: 'Proses'
-  }
-];
-
-const mockUsers = Array(15).fill(null).map((_, i) => ({
-  id: i + 1,
-  username: 'userjabordir',
-  name: 'Nama User',
-  email: 'emailuser@gmail.com',
-  phone: '081234567890',
-  password: 'Password*5'
-}));
-
-// Sidebar Component
-const Sidebar = ({ activeMenu, setActiveMenu }) => {
-  const menuItems = [
-    { id: 'beranda', label: 'Beranda', icon: LayoutDashboard },
-    { id: 'users', label: 'Kelola User', icon: Users },
-    { id: 'profile', label: 'Edit Profil', icon: UserCircle },
-    { id: 'products', label: 'Edit Produk', icon: Package },
-    { id: 'transactions', label: 'Status Transaksi', icon: ShoppingCart },
-    { id: 'orders', label: 'Status Barang', icon: Box },
-    { id: 'reports', label: 'Laporan Penjualan', icon: FileText }
-  ];
-
-  return (
-    <div className="w-64 bg-slate-900 min-h-screen p-4 flex flex-col">
-      <div className="mb-8">
-        <h1 className="text-white text-3xl font-bold">
-          JA<span className="text-red-500">.</span>
-        </h1>
-        <p className="text-white text-xl">Bordir</p>
-      </div>
-
-      <nav className="flex-1 space-y-2">
-        {menuItems.map(item => (
-          <button
-            key={item.id}
-            onClick={() => setActiveMenu(item.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              activeMenu === item.id 
-                ? 'bg-white text-slate-900' 
-                : 'text-white hover:bg-slate-800'
-            }`}
-          >
-            <item.icon size={20} />
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
-
-      <button className="flex items-center gap-3 px-4 py-3 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors mt-4">
-        <LogOut size={20} />
-        <span>Keluar</span>
-      </button>
-    </div>
-  );
-};
-
-// Dashboard/Beranda Component
-const BerandaPage = () => {
-  return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-slate-900 mb-8">Selamat Datang Admin</h1>
-      
-      <div className="grid grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-blue-200 p-3 rounded-full">
-              <Users className="text-blue-600" size={24} />
-            </div>
-            <p className="text-sm text-blue-600">Pengguna Terdaftar</p>
-          </div>
-          <p className="text-4xl font-bold text-blue-900">{mockStats.totalUsers}</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-cyan-200 p-3 rounded-full">
-              <Box className="text-cyan-600" size={24} />
-            </div>
-            <p className="text-sm text-cyan-600">Kategori Bordir</p>
-          </div>
-          <p className="text-4xl font-bold text-cyan-900">5</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-sky-50 to-sky-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-sky-200 p-3 rounded-full">
-              <ShoppingCart className="text-sky-600" size={24} />
-            </div>
-            <p className="text-sm text-sky-600">Total Transaksi</p>
-          </div>
-          <p className="text-4xl font-bold text-sky-900">{mockStats.totalTransactions}</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-blue-200 p-3 rounded-full">
-              <DollarSign className="text-blue-600" size={24} />
-            </div>
-            <p className="text-sm text-blue-600">Pemasukan Total (Rp)</p>
-          </div>
-          <p className="text-3xl font-bold text-blue-900">{mockStats.totalRevenue.toLocaleString('id-ID')}</p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-slate-900">Grafik Penjualan</h2>
-          <select className="border border-slate-300 rounded-lg px-4 py-2 text-sm">
-            <option>2026-2027</option>
-          </select>
-        </div>
-        <div className="flex items-end justify-around h-64 gap-2">
-          {mockSalesData.map((data, i) => (
-            <div key={i} className="flex flex-col items-center flex-1">
-              <div 
-                className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t-lg transition-all hover:from-amber-500 hover:to-amber-600"
-                style={{ height: `${(data.sales / 75) * 100}%` }}
-              />
-              <p className="text-xs text-slate-600 mt-2">{data.month}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Laporan Penjualan Component
-const LaporanPage = () => {
-  return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <FileText className="text-slate-700" size={32} />
-        <h1 className="text-3xl font-bold text-slate-900">Laporan Penjualan</h1>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-        <div className="flex gap-4 mb-6">
-          <select className="border border-slate-300 rounded-lg px-4 py-2">
-            <option>Desember</option>
-          </select>
-          <select className="border border-slate-300 rounded-lg px-4 py-2">
-            <option>2025</option>
-          </select>
-          <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-            Terapkan
-          </button>
-        </div>
-
-        <div className="grid grid-cols-3 gap-6 mb-8">
-          <div className="bg-blue-50 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <ShoppingCart className="text-blue-600" size={32} />
-            </div>
-            <p className="text-sm text-blue-600 mb-1">Total Transaksi</p>
-            <p className="text-4xl font-bold text-blue-900">257 <span className="text-lg">Transaksi</span></p>
-          </div>
-
-          <div className="bg-blue-50 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <Package className="text-blue-600" size={32} />
-            </div>
-            <p className="text-sm text-blue-600 mb-1">Produk Terjual</p>
-            <p className="text-4xl font-bold text-blue-900">500 <span className="text-lg">Produk</span></p>
-          </div>
-
-          <div className="bg-blue-50 rounded-xl p-6">
-            <p className="text-sm text-blue-600 mb-1">Total Pendapatan</p>
-            <p className="text-3xl font-bold text-blue-900">Rp100.000.000,-</p>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-slate-900">Grafik Penjualan</h3>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-amber-500 rounded"></div>
-              <span className="text-sm text-slate-600">Jumlah Penjualan</span>
-            </div>
-          </div>
-          <div className="flex items-end justify-around h-48 gap-2">
-            {mockSalesData.map((data, i) => (
-              <div key={i} className="flex flex-col items-center flex-1">
-                <div 
-                  className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t-lg"
-                  style={{ height: `${(data.sales / 75) * 100}%` }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-md p-6">
-        <h3 className="text-xl font-bold text-slate-900 mb-6">Ringkasan Penjualan</h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-semibold text-slate-700 mb-3">Produk Terlaris</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>1. Bordir Seragam</span>
-                <span className="font-semibold">58 Transaksi</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>2. Bordir Emblem</span>
-                <span className="font-semibold">45 Transaksi</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>3. Bordir Topi</span>
-                <span className="font-semibold">23 Transaksi</span>
-              </div>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-semibold text-slate-700 mb-3">Jenis Bordir Terlaris</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>1. Bordir Biasa</span>
-                <span className="font-semibold">40 Transaksi</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>2. Bordir 3D</span>
-                <span className="font-semibold">30 Transaksi</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>3. Bordir 5 Warna</span>
-                <span className="font-semibold">23 Transaksi</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Status Barang Component
-const StatusBarangPage = () => {
-  return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <Box className="text-slate-700" size={32} />
-        <h1 className="text-3xl font-bold text-slate-900">Status Barang</h1>
-      </div>
-
-      <div className="space-y-4">
-        {mockOrders.map((order, i) => (
-          <div key={i} className="bg-white rounded-2xl shadow-md p-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2 text-sm">
-                <p><span className="font-semibold">No. Pemesanan:</span> {order.id}</p>
-                <p><span className="font-semibold">Nama Pelanggan:</span> {order.customer}</p>
-                <p><span className="font-semibold">Alamat:</span> {order.address}</p>
-                <p><span className="font-semibold">Nomor HP:</span> {order.phone}</p>
-                <p><span className="font-semibold">Kategori Bordir:</span> {order.category}</p>
-                <p><span className="font-semibold">Jenis Bordir:</span> {order.type}</p>
-                <p><span className="font-semibold">Ukuran:</span> {order.size}</p>
-                <p><span className="font-semibold">Jumlah:</span> {order.quantity}</p>
-                <p><span className="font-semibold">Metode Pengiriman:</span> {order.method}</p>
-                <p><span className="font-semibold">Metode pembayaran:</span> {order.payment}</p>
-                <p><span className="font-semibold">Total Pembayaran:</span> Rp{order.total.toLocaleString('id-ID')}</p>
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <Eye size={18} />
-                  Lihat File
-                </button>
-                <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <FileCheck size={18} />
-                  Bukti Pembayaran
-                </button>
-                
-                <div className="mt-4">
-                  <p className="text-sm text-slate-600 mb-2">Masukkan Estimasi Waktu Selesai</p>
-                  <div className="flex gap-2">
-                    <input 
-                      type="date" 
-                      className="border border-slate-300 rounded-lg px-4 py-2 flex-1"
-                      defaultValue="2025-12-25"
-                    />
-                    <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                      Simpan
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 mt-4">
-                  <button className="flex-1 bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors">
-                    Proses
-                  </button>
-                  <button className="flex-1 bg-slate-300 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-400 transition-colors">
-                    Finishing
-                  </button>
-                  <button className="flex-1 bg-slate-300 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-400 transition-colors">
-                    Selesai
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Status Transaksi Component
-const StatusTransaksiPage = () => {
-  return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <ShoppingCart className="text-slate-700" size={32} />
-        <h1 className="text-3xl font-bold text-slate-900">Status Transaksi</h1>
-      </div>
-
-      <div className="space-y-4">
-        {mockOrders.slice(0, 3).map((order, i) => (
-          <div key={i} className="bg-white rounded-2xl shadow-md p-6">
-            <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2 space-y-2 text-sm">
-                <p><span className="font-semibold">No. Pemesanan:</span> {order.id}</p>
-                <p><span className="font-semibold">Nama Pelanggan:</span> {order.customer}</p>
-                <p><span className="font-semibold">Alamat:</span> {order.address}</p>
-                <p><span className="font-semibold">Nomor HP:</span> {order.phone}</p>
-                <p><span className="font-semibold">Kategori Bordir:</span> {order.category}</p>
-                <p><span className="font-semibold">Jenis Bordir:</span> {order.type}</p>
-                <p><span className="font-semibold">Ukuran:</span> {order.size}</p>
-                <p><span className="font-semibold">Jumlah:</span> {order.quantity}</p>
-                <p><span className="font-semibold">Metode Pengiriman:</span> {order.method}</p>
-                <p><span className="font-semibold">Metode pembayaran:</span> {order.payment}</p>
-                <p><span className="font-semibold">Total Pembayaran:</span> Rp{order.total.toLocaleString('id-ID')}</p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <Eye size={18} />
-                  Lihat File
-                </button>
-                <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <FileCheck size={18} />
-                  Bukti Pembayaran
-                </button>
-                <button className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2 mt-4">
-                  <FileCheck size={20} />
-                  <span className="font-semibold">Verifikasi Pesanan</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Edit Produk Component
-const EditProdukPage = () => {
-  const [formData, setFormData] = useState({
-    jenisBordir: 'Bordir 10 warna, Bordir biasa, Bordir 5 warna',
-    ukuranBordir: '25-30 CM'
-  });
-
-  return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <Package className="text-slate-700" size={32} />
-        <h1 className="text-3xl font-bold text-slate-900">Edit Produk</h1>
-        <p className="text-slate-500">Update Produk Anda</p>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-md p-8">
-        <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-6 flex items-center gap-3">
-          <FileCheck className="text-green-600" size={24} />
-          <p className="text-green-800 font-medium">Produk Anda Berhasil Diupdate</p>
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <label className="block text-slate-700 font-semibold mb-2">Tambah Jenis Bordir</label>
-            <input 
-              type="text"
-              value={formData.jenisBordir}
-              onChange={(e) => setFormData({...formData, jenisBordir: e.target.value})}
-              className="w-full border border-slate-300 rounded-lg px-4 py-3"
-            />
-          </div>
-
-          <div>
-            <label className="block text-slate-700 font-semibold mb-2">Tambah Ukuran Bordir</label>
-            <input 
-              type="text"
-              value={formData.ukuranBordir}
-              onChange={(e) => setFormData({...formData, ukuranBordir: e.target.value})}
-              className="w-full border border-slate-300 rounded-lg px-4 py-3"
-            />
-          </div>
-
-          <div>
-            <label className="block text-slate-700 font-semibold mb-2">Tambah Foto Portofolio</label>
-            <div className="border-2 border-dashed border-slate-300 rounded-lg p-12 text-center">
-              <Download className="mx-auto text-slate-400 mb-3" size={48} />
-              <p className="text-slate-700 font-medium mb-1">Unggah Gambar Produk</p>
-              <p className="text-slate-500 text-sm mb-1">PNG, JPG maksimal 5MB</p>
-              <p className="text-slate-500 text-sm mb-4">Rekomendasi ukuran foto 800x600 pixel (4:3)</p>
-              <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                Pilih File
-              </button>
-            </div>
-          </div>
-
-          <button className="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors">
-            Simpan Perubahan
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Kelola User Component
-const KelolaUserPage = () => {
-  return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <Users className="text-slate-700" size={32} />
-          <h1 className="text-3xl font-bold text-slate-900">Data User</h1>
-        </div>
-        <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-          257 Pengguna Terdaftar
-        </button>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-blue-50">
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Username</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Nama Lengkap</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Email</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">No. HP</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Password</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockUsers.map((user) => (
-              <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-6 py-4 text-sm text-blue-600">{user.username}</td>
-                <td className="px-6 py-4 text-sm text-blue-600">{user.name}</td>
-                <td className="px-6 py-4 text-sm text-blue-600">{user.email}</td>
-                <td className="px-6 py-4 text-sm text-blue-600">{user.phone}</td>
-                <td className="px-6 py-4 text-sm text-blue-600">{user.password}</td>
-                <td className="px-6 py-4">
-                  <button className="text-red-500 hover:text-red-700">
-                    <Trash2 size={20} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
-// Edit Profil Component
-const EditProfilPage = () => {
+const EditProfil = () => {
   const [profile, setProfile] = useState({
     description: 'JA Bordir adalah usaha bordir yang mengutamakan kualitas, ketelitian, dan hasil akhir yang rap. Kami melayani berbagai kebutuhan bordir mulai dari seragam, logo, nama, hingga desain custom sesuai permintaan. Dengan didukung oleh tenaga profesional dan berpengalaman dan teknologi tinggi, JA Bordir berkomitmen memberikan hasil bordir yang kuat, detail, dan bernilai estetik tinggi. Kami juga bahwa setiap jahitan memiliki makna, dan setiap pesanan adalah kepercayaan. Karena itu, kami selalu mengutamakan kepuasan pelanggan melalui layanan cepat, ramah, dan hasil terbaik di setiap produk yang kami kerjakan.',
     address: 'Purwodadi, Jawa Tengah',
     mapsLink: 'https://googlemaps.com',
     phone: '082010203020'
   });
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const handleSaveChanges = async () => {
+    // Reset errors
+    setErrors({});
+
+    // Form validation
+    const newErrors = {};
+
+    if (!profile.description.trim()) {
+      newErrors.description = 'Deskripsi Perusahaan tidak boleh kosong';
+    }
+
+    if (!profile.address.trim()) {
+      newErrors.address = 'Alamat tidak boleh kosong';
+    }
+
+    if (!profile.phone.trim()) {
+      newErrors.phone = 'Nomor Telepon tidak boleh kosong';
+    }
+
+    if (!profile.mapsLink.trim()) {
+      newErrors.mapsLink = 'Link Google Maps tidak boleh kosong';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      // Prepare form data for API submission
+      const profileData = new FormData();
+      profileData.append('description', profile.description);
+      profileData.append('address', profile.address);
+      profileData.append('mapsLink', profile.mapsLink);
+      profileData.append('phone', profile.phone);
+
+      // Here you would typically send the data to your backend
+      // Example API call:
+      // const response = await fetch('http://localhost:8000/api/profile/update', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`, // if authentication is required
+      //   },
+      //   body: profileData,
+      // });
+
+      // if (!response.ok) {
+      //   throw new Error(`HTTP error! status: ${response.status}`);
+      // }
+
+      // const result = await response.json();
+      // console.log('Profile updated successfully:', result);
+
+      // For demonstration purposes, I'm using a mock API call
+      console.log('Sending profile data to API:', profile);
+
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Show success popup
+      setShowSuccessPopup(true);
+
+      // Optional: Hide the popup after 3 seconds
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Terjadi kesalahan saat menyimpan profil. Silakan coba lagi.');
+    }
+  };
 
   return (
     <div className="p-8">
       <div className="flex items-center gap-3 mb-8">
         <UserCircle className="text-slate-700" size={32} />
         <h1 className="text-3xl font-bold text-slate-900">Edit Profil Perusahaan</h1>
-        <p className="text-slate-500">Update Profil Perusahaan Anda</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-md p-8">
-        <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-6 flex items-center gap-3">
-          <FileCheck className="text-green-600" size={24} />
-          <p className="text-green-800 font-medium">Profil Perusahaan Anda Berhasil Diupdate</p>
-        </div>
-
+        {showSuccessPopup && (
+          <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-6 flex items-center gap-3">
+            <FileCheck className="text-green-600" size={24} />
+            <p className="text-green-800 font-medium">Profil Perusahaan Anda Berhasil Diupdate</p>
+          </div>
+        )}
+        
         <div className="space-y-6">
           <div>
             <label className="block text-slate-700 font-semibold mb-2">Deskripsi Perusahaan</label>
-            <textarea 
+            <textarea
               value={profile.description}
               onChange={(e) => setProfile({...profile, description: e.target.value})}
-              className="w-full border border-slate-300 rounded-lg px-4 py-3 h-48"
+              className={`w-full border ${errors.description ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-3 h-48`}
             />
+            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
           </div>
 
           <div>
             <label className="block text-slate-700 font-semibold mb-2">Alamat</label>
-            <input 
+            <input
               type="text"
               value={profile.address}
               onChange={(e) => setProfile({...profile, address: e.target.value})}
-              className="w-full border border-slate-300 rounded-lg px-4 py-3"
+              className={`w-full border ${errors.address ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-3`}
             />
+            {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
           </div>
 
           <div>
             <label className="block text-slate-700 font-semibold mb-2">Link Google Maps</label>
-            <input 
+            <input
               type="text"
               value={profile.mapsLink}
               onChange={(e) => setProfile({...profile, mapsLink: e.target.value})}
-              className="w-full border border-slate-300 rounded-lg px-4 py-3"
+              className={`w-full border ${errors.mapsLink ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-3`}
             />
+            {errors.mapsLink && <p className="text-red-500 text-sm mt-1">{errors.mapsLink}</p>}
           </div>
 
           <div>
             <label className="block text-slate-700 font-semibold mb-2">Nomor Telepon</label>
-            <input 
+            <input
               type="text"
               value={profile.phone}
               onChange={(e) => setProfile({...profile, phone: e.target.value})}
-              className="w-full border border-slate-300 rounded-lg px-4 py-3"
+              className={`w-full border ${errors.phone ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-3`}
             />
+            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
           </div>
 
-          <button className="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+          <button 
+            className="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+            onClick={handleSaveChanges}
+          >
             Simpan Perubahan
           </button>
         </div>
@@ -596,4 +154,4 @@ const EditProfilPage = () => {
   );
 };
 
-export default EditProfilPage;
+export default EditProfil;

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  UserCircle, 
-  Package, 
-  ShoppingCart, 
+import {
+  LayoutDashboard,
+  Users,
+  UserCircle,
+  Package,
+  ShoppingCart,
   Box,
   FileText,
   LogOut,
@@ -63,7 +63,7 @@ const mockUsers = Array(15).fill(null).map((_, i) => ({
   name: 'Nama User',
   email: 'emailuser@gmail.com',
   phone: '081234567890',
-  alamat: 'Semarang'
+  password: 'Password*5'
 }));
 
 // Sidebar Component
@@ -93,8 +93,8 @@ const Sidebar = ({ activeMenu, setActiveMenu }) => {
             key={item.id}
             onClick={() => setActiveMenu(item.id)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              activeMenu === item.id 
-                ? 'bg-white text-slate-900' 
+              activeMenu === item.id
+                ? 'bg-white text-slate-900'
                 : 'text-white hover:bg-slate-800'
             }`}
           >
@@ -117,7 +117,7 @@ const BerandaPage = () => {
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold text-slate-900 mb-8">Selamat Datang Admin</h1>
-      
+
       <div className="grid grid-cols-4 gap-6 mb-8">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
@@ -170,7 +170,7 @@ const BerandaPage = () => {
         <div className="flex items-end justify-around h-64 gap-2">
           {mockSalesData.map((data, i) => (
             <div key={i} className="flex flex-col items-center flex-1">
-              <div 
+              <div
                 className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t-lg transition-all hover:from-amber-500 hover:to-amber-600"
                 style={{ height: `${(data.sales / 75) * 100}%` }}
               />
@@ -239,7 +239,7 @@ const LaporanPage = () => {
           <div className="flex items-end justify-around h-48 gap-2">
             {mockSalesData.map((data, i) => (
               <div key={i} className="flex flex-col items-center flex-1">
-                <div 
+                <div
                   className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t-lg"
                   style={{ height: `${(data.sales / 75) * 100}%` }}
                 />
@@ -328,12 +328,12 @@ const StatusBarangPage = () => {
                   <FileCheck size={18} />
                   Bukti Pembayaran
                 </button>
-                
+
                 <div className="mt-4">
                   <p className="text-sm text-slate-600 mb-2">Masukkan Estimasi Waktu Selesai</p>
                   <div className="flex gap-2">
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       className="border border-slate-300 rounded-lg px-4 py-2 flex-1"
                       defaultValue="2025-12-25"
                     />
@@ -412,70 +412,6 @@ const StatusTransaksiPage = () => {
   );
 };
 
-// Edit Produk Component
-const EditProdukPage = () => {
-  const [formData, setFormData] = useState({
-    jenisBordir: 'Bordir 10 warna, Bordir biasa, Bordir 5 warna',
-    ukuranBordir: '25-30 CM'
-  });
-
-  return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <Package className="text-slate-700" size={32} />
-        <h1 className="text-3xl font-bold text-slate-900">Edit Produk</h1>
-        <p className="text-slate-500">Update Produk Anda</p>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-md p-8">
-        <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-6 flex items-center gap-3">
-          <FileCheck className="text-green-600" size={24} />
-          <p className="text-green-800 font-medium">Produk Anda Berhasil Diupdate</p>
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <label className="block text-slate-700 font-semibold mb-2">Tambah Jenis Bordir</label>
-            <input 
-              type="text"
-              value={formData.jenisBordir}
-              onChange={(e) => setFormData({...formData, jenisBordir: e.target.value})}
-              className="w-full border border-slate-300 rounded-lg px-4 py-3"
-            />
-          </div>
-
-          <div>
-            <label className="block text-slate-700 font-semibold mb-2">Tambah Ukuran Bordir</label>
-            <input 
-              type="text"
-              value={formData.ukuranBordir}
-              onChange={(e) => setFormData({...formData, ukuranBordir: e.target.value})}
-              className="w-full border border-slate-300 rounded-lg px-4 py-3"
-            />
-          </div>
-
-          <div>
-            <label className="block text-slate-700 font-semibold mb-2">Tambah Foto Portofolio</label>
-            <div className="border-2 border-dashed border-slate-300 rounded-lg p-12 text-center">
-              <Download className="mx-auto text-slate-400 mb-3" size={48} />
-              <p className="text-slate-700 font-medium mb-1">Unggah Gambar Produk</p>
-              <p className="text-slate-500 text-sm mb-1">PNG, JPG maksimal 5MB</p>
-              <p className="text-slate-500 text-sm mb-4">Rekomendasi ukuran foto 800x600 pixel (4:3)</p>
-              <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                Pilih File
-              </button>
-            </div>
-          </div>
-
-          <button className="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors">
-            Simpan Perubahan
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // Kelola User Component
 const KelolaUserPage = () => {
   return (
@@ -498,7 +434,7 @@ const KelolaUserPage = () => {
               <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Nama Lengkap</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Email</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">No. HP</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Alamat</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Password</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Aksi</th>
             </tr>
           </thead>
@@ -509,7 +445,7 @@ const KelolaUserPage = () => {
                 <td className="px-6 py-4 text-sm text-blue-600">{user.name}</td>
                 <td className="px-6 py-4 text-sm text-blue-600">{user.email}</td>
                 <td className="px-6 py-4 text-sm text-blue-600">{user.phone}</td>
-                <td className="px-6 py-4 text-sm text-blue-600">{user.alamat}</td>
+                <td className="px-6 py-4 text-sm text-blue-600">{user.password}</td>
                 <td className="px-6 py-4">
                   <button className="text-red-500 hover:text-red-700">
                     <Trash2 size={20} />
@@ -550,7 +486,7 @@ const EditProfilPage = () => {
         <div className="space-y-6">
           <div>
             <label className="block text-slate-700 font-semibold mb-2">Deskripsi Perusahaan</label>
-            <textarea 
+            <textarea
               value={profile.description}
               onChange={(e) => setProfile({...profile, description: e.target.value})}
               className="w-full border border-slate-300 rounded-lg px-4 py-3 h-48"
@@ -559,7 +495,7 @@ const EditProfilPage = () => {
 
           <div>
             <label className="block text-slate-700 font-semibold mb-2">Alamat</label>
-            <input 
+            <input
               type="text"
               value={profile.address}
               onChange={(e) => setProfile({...profile, address: e.target.value})}
@@ -569,7 +505,7 @@ const EditProfilPage = () => {
 
           <div>
             <label className="block text-slate-700 font-semibold mb-2">Link Google Maps</label>
-            <input 
+            <input
               type="text"
               value={profile.mapsLink}
               onChange={(e) => setProfile({...profile, mapsLink: e.target.value})}
@@ -579,7 +515,7 @@ const EditProfilPage = () => {
 
           <div>
             <label className="block text-slate-700 font-semibold mb-2">Nomor Telepon</label>
-            <input 
+            <input
               type="text"
               value={profile.phone}
               onChange={(e) => setProfile({...profile, phone: e.target.value})}
@@ -596,4 +532,39 @@ const EditProfilPage = () => {
   );
 };
 
-export default KelolaUserPage;
+// Main Dashboard Component
+const Dashboard = () => {
+  const [activeMenu, setActiveMenu] = useState('beranda');
+
+  const renderActiveComponent = () => {
+    switch(activeMenu) {
+      case 'beranda':
+        return <BerandaPage />;
+      case 'users':
+        return <KelolaUserPage />;
+      case 'profile':
+        return <EditProfilPage />;
+      case 'products':
+        return <div className="p-8"><p>Products content will go here</p></div>;
+      case 'transactions':
+        return <StatusTransaksiPage />;
+      case 'orders':
+        return <StatusBarangPage />;
+      case 'reports':
+        return <LaporanPage />;
+      default:
+        return <BerandaPage />;
+    }
+  };
+
+  return (
+    <div className="flex">
+      <Sidebar activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+      <div className="flex-1 bg-slate-100 min-h-screen overflow-auto">
+        {renderActiveComponent()}
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
