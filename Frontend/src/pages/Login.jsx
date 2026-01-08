@@ -48,7 +48,7 @@ export default function Login() {
 
   return (
     // NOTE: 60px = tinggi navbar kamu (sesuaikan kalau beda)
-    <div className="h-[calc(100vh-74px)] w-full flex overflow-hidden">
+    <div className="h-screen w-full flex overflow-hidden">
       {/* LEFT SIDE - AESTHETIC PANEL */}
       <div className="hidden lg:flex w-1/2 h-full bg-[#010E31] p-12 flex-col justify-center">
         <div className="max-w-md mx-auto text-left">

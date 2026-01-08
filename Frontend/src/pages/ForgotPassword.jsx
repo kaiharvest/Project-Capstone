@@ -34,7 +34,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="h-[calc(100vh-74px)] w-full flex bg-[#F7F7F7] items-center justify-center">
+    <div className="h-screen  w-full flex bg-[#F7F7F7] items-center justify-center">
       <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg">
         <h1 className="text-center text-[#001243] font-extrabold text-2xl tracking-widest mb-6">
           LUPA PASSWORD

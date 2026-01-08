@@ -27,7 +27,7 @@ import porto5 from "../assets/portofolio/porto5.png";
 import porto6 from "../assets/portofolio/porto6.png";
 import porto7 from "../assets/portofolio/porto7.png";
 
-import Footer from "../components/Footer";
+
 
 export default function Beranda() {
   const images = [bg1, bg2, bg3];
@@ -212,7 +212,7 @@ export default function Beranda() {
         </div>
       </section>
 
-      <Footer />
+      
     </>
   );
 }

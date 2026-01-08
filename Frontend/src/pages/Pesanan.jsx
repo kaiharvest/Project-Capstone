@@ -1,6 +1,6 @@
 // Pesanan.jsx
 import React, { useEffect, useState, useRef } from "react";
-import Footer from "../components/Footer";
+
 
 const TABS = [
   { key: "menunggu", label: "Menunggu", color: "#F79A19" },
@@ -199,8 +199,6 @@ export default function Pesanan() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }

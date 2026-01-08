@@ -68,7 +68,7 @@ export default function Register() {
   };
 
   return (
-      <div className="h-[calc(100vh-74px)] w-full flex overflow-hidden">
+      <div className="h-screen w-full flex overflow-hidden">
       {/* LEFT SIDE - AESTHETIC PANEL */}
       <div className="hidden lg:flex w-1/2 h-full bg-[#010E31] p-12 flex-col justify-center items-center text-center">
         <div className="max-w-md">

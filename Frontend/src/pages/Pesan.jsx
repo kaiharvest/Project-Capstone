@@ -7,7 +7,7 @@ import emblem from "../assets/icons/emblem.svg";
 import jaket from "../assets/icons/jaket.svg";
 import tas from "../assets/icons/tas.svg";
 import dummyImg from "../assets/dummy/profil.png";
-import Footer from "../components/Footer";
+
 
 export default function Pesan() {
   const [layanan, setLayanan] = useState("Bordir Seragam");
@@ -97,15 +97,15 @@ export default function Pesan() {
               <div>
                 <label className="block text-white text-sm mb-1 font-medium">Ukuran Bordir</label>
                 <select className="w-full px-5 py-3 rounded-full bg-white text-gray-700">
-                  <option>20–24 CM</option>
-                  <option>10–15 CM</option>
+                  <option>20-24 CM</option>
+                  <option>10-15 CM</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-white text-sm mb-1 font-medium">Jumlah Pemesanan</label>
                 <input
-                  type="number"
+                  type="text"
                   min="1"
                   className="w-full px-5 py-3 rounded-full bg-white text-gray-700"
                   onKeyDown={(e) => e.key === "-" && e.preventDefault()}
@@ -175,7 +175,6 @@ export default function Pesan() {
 
         </div>
       </section>
-      <Footer />
     </div>
   );
 }
