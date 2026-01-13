@@ -25,7 +25,7 @@ export default function Login() {
       toast.success("Login berhasil!");
 
       if (user.role === "admin") {
-        navigate("/");
+        navigate("/admin/beranda"); // Arahkan admin ke halaman utama admin
       } else {
         navigate("/akun");
       }
