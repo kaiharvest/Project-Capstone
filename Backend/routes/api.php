@@ -11,6 +11,11 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController; // Alias untuk OrderController admin
 use App\Http\Controllers\Admin\TransactionController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\CompanyProfileController;
+use App\Http\Controllers\Admin\EmbroideryTypeController;
+use App\Http\Controllers\Admin\EmbroiderySizeController;
+use App\Http\Controllers\Admin\PortfolioPhotoController;
+use App\Http\Controllers\Admin\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,17 +52,26 @@ Route::middleware(['auth:sanctum','admin'])->prefix('admin')->group(function(){
 Route::get('/settings', [SettingsController::class,'show']);
 Route::put('/settings', [SettingsController::class,'update']);
 
+Route::get('/dashboard', [DashboardController::class, 'summary']);
+Route::get('/reports/sales', [DashboardController::class, 'salesReport']);
+Route::get('/company-profile', [CompanyProfileController::class, 'show']);
+Route::put('/company-profile', [CompanyProfileController::class, 'update']);
+
 
 Route::apiResource('users', UserController::class);
 
 
 Route::apiResource('products', ProductController::class);
+Route::apiResource('embroidery-types', EmbroideryTypeController::class);
+Route::apiResource('embroidery-sizes', EmbroiderySizeController::class);
+Route::apiResource('portfolio-photos', PortfolioPhotoController::class);
 
 
 Route::get('orders', [AdminOrderController::class,'index']);
 Route::get('orders/{id}', [AdminOrderController::class,'show']);
 Route::post('orders/{id}/status', [AdminOrderController::class,'updateStatus']);
 Route::post('orders/{id}/price', [AdminOrderController::class,'updateTotalPrice']);
+Route::post('orders/{id}/estimate', [AdminOrderController::class,'updateEstimatedCompletion']);
 Route::post('orders/{id}/proof', [AdminOrderController::class,'uploadProof']);
 Route::get('orders/{id}/proof', [AdminOrderController::class,'showProof']);
 
@@ -70,6 +84,4 @@ Route::post('transactions/{id}/status', [TransactionController::class,'updateSta
 Route::get('reports/finance', [ReportController::class,'finance']);
 });
     
-
-
 

@@ -47,7 +47,7 @@ class OrderController extends Controller
      */
     public function show($id)
     {
-        return Order::with('user')->findOrFail($id);
+        return Order::with(['user', 'items.product', 'transaction'])->findOrFail($id);
     }
 
     /**
@@ -84,6 +84,27 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Total harga pesanan berhasil diperbarui.',
+            'order' => $order
+        ]);
+    }
+
+    /**
+     * Memperbarui estimasi selesai pesanan
+     */
+    public function updateEstimatedCompletion(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $data = $request->validate([
+            'estimated_completion_date' => 'required|date',
+        ]);
+
+        $order->update([
+            'estimated_completion_date' => $data['estimated_completion_date'],
+        ]);
+
+        return response()->json([
+            'message' => 'Estimasi selesai berhasil diperbarui.',
             'order' => $order
         ]);
     }
