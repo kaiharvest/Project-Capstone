@@ -32,7 +32,7 @@ export default function Login() {
       // Arahkan berdasarkan peran pengguna
       if (user.role === "admin") {
         console.log("Admin logged in, redirecting to home.");
-        navigate("/"); // Arahkan admin ke halaman utama
+        navigate("/admin/beranda"); // Arahkan admin ke halaman utama
       } else {
         navigate("/akun"); // Arahkan pengguna biasa ke halaman akun
       }
