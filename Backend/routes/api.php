@@ -41,6 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders/{id}/checkout-from-cart', [OrderController::class, 'checkoutFromCart']);
     Route::post('/orders/{id}/upload-proof', [OrderController::class, 'uploadProof']);
     Route::get('/orders/{id}/proof', [OrderController::class, 'showProof']);
+    Route::post('/orders/{id}/upload-design-image', [OrderController::class, 'uploadDesignImage']);
+    Route::get('/orders/{id}/design-image', [OrderController::class, 'showDesignImage']);
 });
 
 Route::post('/register', [AuthController::class, 'register']);

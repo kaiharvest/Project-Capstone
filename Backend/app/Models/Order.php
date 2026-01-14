@@ -27,7 +27,8 @@ class Order extends Model
         'status',
         'order_type',
         'notes',
-        'proof_image' // untuk bukti pembayaran
+        'proof_image', // untuk bukti pembayaran
+        'design_image_path' // untuk menyimpan path gambar desain bordir dari user
     ];
 
     /**

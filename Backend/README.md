@@ -201,8 +201,8 @@ Sistem autentikasi menggunakan Laravel Sanctum untuk otentikasi berbasis token.
   ```
   Authorization: Bearer {api_token}
   Accept: application/json
-  Content-Type: application/json
   ```
+- **Catatan:** Gunakan `Content-Type: multipart/form-data` jika mengupload gambar desain, atau `Content-Type: application/json` jika hanya mengirim data teks.
 - **Validasi:**
   - `service_type`: Wajib, enum ['seragam', 'topi', 'emblem', 'jaket', 'tas'].
   - `embroidery_type`: Wajib, enum ['3d', 'computer'].
@@ -212,7 +212,8 @@ Sistem autentikasi menggunakan Laravel Sanctum untuk otentikasi berbasis token.
   - `shipping_address`: Wajib, teks.
   - `notes`: Opsional, teks tambahan.
   - `order_type`: Wajib, enum ['now', 'cart'] - untuk pesan sekarang atau simpan ke keranjang.
-- **Body Request:**
+  - `design_image`: Opsional, file gambar (jpeg, png, jpg, gif, svg), maksimal 5MB - untuk upload desain bordir dari user.
+- **Body Request (untuk form-data):**
   ```json
   {
       "service_type": "jaket",
@@ -220,7 +221,19 @@ Sistem autentikasi menggunakan Laravel Sanctum untuk otentikasi berbasis token.
       "size_cm": 10.50,
       "quantity": 5,
       "shipping_method": "jne",
-      "shipping_address": "Alamat Lengkap Penerima",
+      "notes": "Catatan tambahan untuk pesanan",
+      "order_type": "now",
+      "design_image": "(file gambar)"  // Opsional - file gambar desain bordir
+  }
+  ```
+- **Body Request (untuk JSON):**
+  ```json
+  {
+      "service_type": "jaket",
+      "embroidery_type": "3d",
+      "size_cm": 10.50,
+      "quantity": 5,
+      "shipping_method": "jne",
       "notes": "Catatan tambahan untuk pesanan",
       "order_type": "now"
   }

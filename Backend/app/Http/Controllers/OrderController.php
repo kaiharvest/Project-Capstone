@@ -41,8 +41,43 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
+        // Debug: Log semua input yang diterima
+        \Log::info('OrderController@store - Request received', [
+            'all_inputs' => $request->all(),
+            'input_keys' => array_keys($request->all()),
+            'has_file' => $request->hasFile('design_image'),
+            'file_info' => $request->hasFile('design_image') ? [
+                'name' => $request->file('design_image')->getClientOriginalName(),
+                'size' => $request->file('design_image')->getSize(),
+                'extension' => $request->file('design_image')->getClientOriginalExtension()
+            ] : null,
+            'headers' => $request->header(),
+        ]);
+
+        // Ambil semua input dan normalisasi nama field
+        $input = $request->all();
+        $normalizedInput = [];
+
+        foreach ($input as $key => $value) {
+            // Normalisasi nama field berdasarkan pola yang diketahui
+            $normalizedKey = $key;
+
+            // Jika nama field memiliki underscore di akhir (seperti yang terlihat di log sebelumnya)
+            if (preg_match('/^(service_type|embroidery_type|size_cm|quantity|shipping_method|order_type|notes)_+$/', $key, $matches)) {
+                $normalizedKey = $matches[1]; // Ambil nama field tanpa underscore di akhir
+            }
+
+            $normalizedInput[$normalizedKey] = $value;
+        }
+
+        // Debug: Log input yang dinormalisasi
+        \Log::info('OrderController@store - Normalized input', [
+            'normalized_inputs' => $normalizedInput,
+            'normalized_keys' => array_keys($normalizedInput),
+        ]);
+
         // Validasi input dari user
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make($normalizedInput, [
             'service_type' => 'required|in:seragam,topi,emblem,jaket,tas',
             'embroidery_type' => 'required|in:3d,computer',
             'size_cm' => 'required|numeric|min:0.1',
@@ -50,9 +85,16 @@ class OrderController extends Controller
             'shipping_method' => 'required|in:jnt,jne',
             'order_type' => 'required|in:now,cart',
             'notes' => 'nullable|string|max:500',
+            'design_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120', // max 5MB
         ]);
 
         if ($validator->fails()) {
+            \Log::error('OrderController@store - Validation failed', [
+                'errors' => $validator->errors()->toArray(),
+                'normalized_input' => $normalizedInput,
+                'original_input' => $request->all()
+            ]);
+
             return response()->json([
                 'message' => 'Data yang diberikan tidak valid.',
                 'errors' => $validator->errors(),
@@ -61,38 +103,49 @@ class OrderController extends Controller
 
         // Ambil user yang sedang login
         $user = Auth::user();
-        
+
         // Ambil alamat dari profil user
         $shippingAddress = $user->alamat;
-        
+
         // Hitung total harga berdasarkan aturan harga dari sistem
         $totalPrice = $this->calculateTotalPrice(
-            $request->service_type,
-            $request->embroidery_type,
-            $request->size_cm,
-            $request->quantity
+            $normalizedInput['service_type'],
+            $normalizedInput['embroidery_type'],
+            $normalizedInput['size_cm'],
+            $normalizedInput['quantity']
         );
 
-        // Buat pesanan baru
-        $order = Order::create([
+        // Siapkan data untuk disimpan
+        $orderData = [
             'user_id' => $user->id,
-            'service_type' => $request->service_type,
-            'embroidery_type' => $request->embroidery_type,
-            'size_cm' => $request->size_cm,
-            'quantity' => $request->quantity,
-            'shipping_method' => $request->shipping_method,
+            'service_type' => $normalizedInput['service_type'],
+            'embroidery_type' => $normalizedInput['embroidery_type'],
+            'size_cm' => $normalizedInput['size_cm'],
+            'quantity' => $normalizedInput['quantity'],
+            'shipping_method' => $normalizedInput['shipping_method'],
             'shipping_address' => $shippingAddress,
             'total_price' => $totalPrice,
-            'status' => $request->order_type === 'now' ? 'pending' : 'cart',
-            'order_type' => $request->order_type,
-            'notes' => $request->notes ?? null,
-        ]);
+            'status' => $normalizedInput['order_type'] === 'now' ? 'pending' : 'cart',
+            'order_type' => $normalizedInput['order_type'],
+            'notes' => $normalizedInput['notes'] ?? null,
+        ];
+
+        // Jika ada file gambar desain yang diupload
+        if ($request->hasFile('design_image')) {
+            $image = $request->file('design_image');
+            $imageName = 'design_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('designs', $imageName, 'public'); // Simpan di storage/app/public/designs
+            $orderData['design_image_path'] = $imageName;
+        }
+
+        // Buat pesanan baru
+        $order = Order::create($orderData);
 
         // Return response sukses
-        $message = $request->order_type === 'now' 
-            ? 'Pesanan berhasil dibuat dan ditandai sebagai pending.' 
+        $message = $request->order_type === 'now'
+            ? 'Pesanan berhasil dibuat dan ditandai sebagai pending.'
             : 'Pesanan ditambahkan ke keranjang.';
-            
+
         return response()->json([
             'message' => $message,
             'order' => $order
@@ -137,6 +190,7 @@ class OrderController extends Controller
             'quantity' => 'sometimes|required|integer|min:1',
             'shipping_method' => 'sometimes|required|in:jnt,jne',
             'notes' => 'sometimes|nullable|string|max:500',
+            'design_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120', // max 5MB
         ]);
 
         if ($validator->fails()) {
@@ -146,12 +200,20 @@ class OrderController extends Controller
             ], 400);
         }
 
-        // Simpan data yang akan diupdate
+        // Siapkan data yang akan diupdate
         $updateData = $request->only([
-            'service_type', 'embroidery_type', 
-            'size_cm', 'quantity', 
+            'service_type', 'embroidery_type',
+            'size_cm', 'quantity',
             'shipping_method', 'notes'
         ]);
+
+        // Jika ada file gambar desain yang diupload
+        if ($request->hasFile('design_image')) {
+            $image = $request->file('design_image');
+            $imageName = 'design_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('designs', $imageName, 'public'); // Simpan di storage/app/public/designs
+            $updateData['design_image_path'] = $imageName;
+        }
 
         // Update data pesanan
         $order->update($updateData);
@@ -249,6 +311,40 @@ class OrderController extends Controller
     }
 
     /**
+     * Upload gambar desain bordir
+     */
+    public function uploadDesignImage(Request $request, $id)
+    {
+        $user = Auth::user();
+        $order = Order::where('id', $id)
+                      ->where('user_id', $user->id)
+                      ->firstOrFail();
+
+        $request->validate([
+            'design_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5120', // max 5MB
+        ]);
+
+        if ($request->hasFile('design_image')) {
+            $image = $request->file('design_image');
+            $imageName = 'design_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('designs', $imageName, 'public'); // Simpan di storage/app/public/designs
+
+            $order->update([
+                'design_image_path' => $imageName
+            ]);
+
+            return response()->json([
+                'message' => 'Gambar desain bordir berhasil diunggah.',
+                'order' => $order
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Gagal mengunggah gambar desain bordir.',
+        ], 400);
+    }
+
+    /**
      * Menampilkan bukti pemesanan
      */
     public function showProof($id)
@@ -269,6 +365,33 @@ class OrderController extends Controller
         if (!file_exists($path)) {
             return response()->json([
                 'message' => 'File bukti pemesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->download($path);
+    }
+
+    /**
+     * Menampilkan gambar desain bordir
+     */
+    public function showDesignImage($id)
+    {
+        $user = Auth::user();
+        $order = Order::where('id', $id)
+                      ->where('user_id', $user->id)
+                      ->firstOrFail();
+
+        if (!$order->design_image_path) {
+            return response()->json([
+                'message' => 'Gambar desain bordir tidak ditemukan.',
+            ], 404);
+        }
+
+        $path = storage_path('app/public/designs/' . $order->design_image_path);
+
+        if (!file_exists($path)) {
+            return response()->json([
+                'message' => 'File gambar desain bordir tidak ditemukan.',
             ], 404);
         }
 
