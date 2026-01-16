@@ -295,63 +295,61 @@ const LaporanPage = () => {
 // Status Barang Component
 const StatusBarangPage = () => {
   return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <Box className="text-slate-700" size={32} />
-        <h1 className="text-3xl font-bold text-slate-900">Status Barang</h1>
+    <div className="p-4 sm:p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <Box className="text-blue-900" size={26} />
+        <h1 className="text-2xl font-bold text-blue-900">Status Barang</h1>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {mockOrders.map((order, i) => (
-          <div key={i} className="bg-white rounded-2xl shadow-md p-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2 text-sm">
-                <p><span className="font-semibold">No. Pemesanan:</span> {order.id}</p>
-                <p><span className="font-semibold">Nama Pelanggan:</span> {order.customer}</p>
-                <p><span className="font-semibold">Alamat:</span> {order.address}</p>
-                <p><span className="font-semibold">Nomor HP:</span> {order.phone}</p>
-                <p><span className="font-semibold">Kategori Bordir:</span> {order.category}</p>
-                <p><span className="font-semibold">Jenis Bordir:</span> {order.type}</p>
-                <p><span className="font-semibold">Ukuran:</span> {order.size}</p>
-                <p><span className="font-semibold">Jumlah:</span> {order.quantity}</p>
-                <p><span className="font-semibold">Metode Pengiriman:</span> {order.method}</p>
-                <p><span className="font-semibold">Metode pembayaran:</span> {order.payment}</p>
-                <p><span className="font-semibold">Total Pembayaran:</span> Rp{order.total.toLocaleString('id-ID')}</p>
+          <div key={i} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5">
+            <div className="grid grid-cols-1 md:grid-cols-8 gap-3 md:gap-4 text-xs text-slate-700 mb-4">
+              <div>{order.id}</div>
+              <div>{order.customer}</div>
+              <div>{order.phone}</div>
+              <div>{order.address}</div>
+              <div>
+                {order.category}, {order.type}, {order.size}, {order.quantity} pcs, {order.method}
               </div>
-
-              <div className="flex flex-col gap-4">
-                <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <Eye size={18} />
-                  Lihat File
+              <div>{order.payment}</div>
+              <div>Rp{order.total.toLocaleString('id-ID')}</div>
+              <div className="flex items-start justify-end gap-2">
+                <button className="w-6 h-6 rounded bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600">
+                  <Eye size={14} />
                 </button>
-                <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <FileCheck size={18} />
-                  Bukti Pembayaran
+                <button className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700">
+                  <FileCheck size={14} />
                 </button>
-                
-                <div className="mt-4">
-                  <p className="text-sm text-slate-600 mb-2">Masukkan Estimasi Waktu Selesai</p>
-                  <div className="flex gap-2">
-                    <input 
-                      type="date" 
-                      className="border border-slate-300 rounded-lg px-4 py-2 flex-1"
-                      defaultValue="2025-12-25"
-                    />
-                    <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                      Simpan
-                    </button>
-                  </div>
-                </div>
+              </div>
+            </div>
 
-                <div className="flex gap-2 mt-4">
-                  <button className="flex-1 bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+              <div className="border border-slate-200 rounded-lg px-3 py-2 flex items-center gap-3">
+                <span className="text-xs font-semibold text-slate-600">Status</span>
+                <div className="flex gap-2 flex-1">
+                  <button className="flex-1 bg-amber-400 text-white text-xs font-semibold py-1.5 rounded-md hover:bg-amber-500">
                     Proses
                   </button>
-                  <button className="flex-1 bg-slate-300 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-400 transition-colors">
+                  <button className="flex-1 bg-slate-200 text-slate-500 text-xs font-semibold py-1.5 rounded-md hover:bg-slate-300">
                     Finishing
                   </button>
-                  <button className="flex-1 bg-slate-300 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-400 transition-colors">
+                  <button className="flex-1 bg-slate-200 text-slate-500 text-xs font-semibold py-1.5 rounded-md hover:bg-slate-300">
                     Selesai
+                  </button>
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded-lg px-3 py-2">
+                <p className="text-[10px] text-slate-500 mb-2">Masukkan Estimasi Waktu Selesai</p>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    className="border border-slate-300 rounded-md px-3 py-1.5 text-xs flex-1"
+                    defaultValue="2025-12-25"
+                  />
+                  <button className="bg-blue-600 text-white px-4 py-1.5 rounded-md text-xs font-semibold hover:bg-blue-700">
+                    Simpan
                   </button>
                 </div>
               </div>

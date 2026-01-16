@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import React from "react";
+import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -9,119 +9,64 @@ import {
   Box,
   FileText,
   LogOut
-} from 'lucide-react';
+} from "lucide-react";
 
-const AdminLayout = () => {
+const menuItems = [
+  { label: "Beranda", icon: LayoutDashboard, to: "/admin/beranda" },
+  { label: "Kelola User", icon: Users, to: "/admin/users" },
+  { label: "Edit Profil", icon: UserCircle, to: "/admin/edit-profil" },
+  { label: "Edit Produk", icon: Package, to: "/admin/produk" },
+  { label: "Status Transaksi", icon: ShoppingCart, to: "/admin/status-transaksi" },
+  { label: "Status Barang", icon: Box, to: "/admin/status-barang" },
+  { label: "Laporan Penjualan", icon: FileText, to: "/admin/laporan" }
+];
+
+const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Determine active menu based on current path
-  const getActiveMenu = () => {
-    const path = location.pathname;
-    if (path.includes('/admin/beranda')) return 'beranda';
-    if (path.includes('/admin/users')) return 'users';
-    if (path.includes('/admin/produk')) return 'products';
-    if (path.includes('/admin/status-transaksi')) return 'transactions';
-    if (path.includes('/admin/status-barang')) return 'orders';
-    if (path.includes('/admin/laporan')) return 'reports';
-    if (path.includes('/admin/edit-profil')) return 'profile';
-    return 'beranda'; // default
-  };
-
-  const [activeMenu, setActiveMenu] = useState(getActiveMenu());
-
-  const menuItems = [
-    { id: 'beranda', label: 'Beranda', icon: LayoutDashboard, path: '/admin/beranda' },
-    { id: 'users', label: 'Kelola User', icon: Users, path: '/admin/users' },
-    { id: 'profile', label: 'Edit Profil', icon: UserCircle, path: '/admin/edit-profil' },
-    { id: 'products', label: 'Edit Produk', icon: Package, path: '/admin/produk' },
-    { id: 'transactions', label: 'Status Transaksi', icon: ShoppingCart, path: '/admin/status-transaksi' },
-    { id: 'orders', label: 'Status Barang', icon: Box, path: '/admin/status-barang' },
-    { id: 'reports', label: 'Laporan Penjualan', icon: FileText, path: '/admin/laporan' }
-  ];
-
-  const handleLogout = () => {
-    navigate('/login');
-  };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
-      {/* Mobile top bar */}
-      <div className="md:hidden flex items-center justify-between bg-slate-900 px-4 py-3">
-        <div>
-          <h1 className="text-white text-2xl font-bold">
-            JA<span className="text-red-500">.</span>
-          </h1>
-          <p className="text-white text-sm">Bordir</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsSidebarOpen(true)}
-          className="text-white px-3 py-2 rounded-md border border-slate-700 hover:bg-slate-800"
-        >
-          Menu
-        </button>
+    <div className="w-[280px] bg-gradient-to-b from-[#0B1A3A] to-[#06122B] h-screen px-5 py-6 flex flex-col">
+      <div className="mb-10">
+        <h1 className="text-white text-2xl font-extrabold leading-none tracking-wide">
+          JA<span className="text-red-500">.</span>
+        </h1>
+        <p className="text-white text-xl font-semibold">Bordir</p>
       </div>
 
-      {/* Mobile overlay */}
-      {isSidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setIsSidebarOpen(false)} />
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={`fixed z-50 inset-y-0 left-0 w-64 bg-slate-900 p-4 flex flex-col transform transition-transform md:static md:translate-x-0 md:w-64 ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="flex items-center justify-between md:block">
-          <div className="mb-8">
-            <h1 className="text-white text-3xl font-bold">
-              JA<span className="text-red-500">.</span>
-            </h1>
-            <p className="text-white text-xl">Bordir</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsSidebarOpen(false)}
-            className="md:hidden text-white px-3 py-2 rounded-md border border-slate-700 hover:bg-slate-800"
-          >
-            Tutup
-          </button>
-        </div>
-        <nav className="flex-1 space-y-2">
-          {menuItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveMenu(item.id);
-                navigate(item.path);
-                setIsSidebarOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                activeMenu === item.id
-                  ? 'bg-white text-slate-900'
-                  : 'text-white hover:bg-slate-800'
-              }`}
+      <nav className="flex-1 space-y-3">
+        {menuItems.map((item, i) => {
+          const isActive = location.pathname === item.to;
+          return (
+            <NavLink
+              key={i}
+              to={item.to}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all
+                ${
+                  isActive
+                    ? "bg-white text-[#0B1A3A] shadow-sm ring-1 ring-white"
+                    : "text-white hover:bg-white/5 ring-1 ring-white/30 hover:ring-white/60"
+                }`}
             >
-              <item.icon size={20} />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
+              <item.icon size={18} />
+              <span className="text-sm font-medium">{item.label}</span>
+            </NavLink>
+          );
+        })}
+      </nav>
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors mt-4"
-        >
-          <LogOut size={20} />
-          <span>Keluar</span>
-        </button>
-      </div>
+      <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors mt-8 w-[120px]">
+        <LogOut size={18} />
+        <span className="text-sm font-semibold">Keluar</span>
+      </button>
+    </div>
+  );
+};
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
+const AdminLayout = () => {
+  return (
+    <div className="flex h-screen overflow-hidden bg-white">
+      <Sidebar />
+      <div className="flex-1 h-screen overflow-y-auto">
         <Outlet />
       </div>
     </div>
