@@ -276,7 +276,99 @@ class OrderController extends Controller
     }
 
     /**
-     * Upload bukti pemesanan
+     * Upload bukti pembayaran
+     */
+    public function uploadPaymentProof(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5120', // max 5MB
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $order = Order::findOrFail($id);
+
+        // Pastikan hanya pemilik pesanan yang bisa upload bukti pembayaran
+        if ($order->user_id !== $user->id) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        // Validasi status pesanan (misalnya hanya bisa upload jika status pending)
+        if ($order->status !== 'pending') {
+            return response()->json([
+                'message' => 'Cannot upload payment proof for this order status'
+            ], 400);
+        }
+
+        if ($request->hasFile('payment_proof')) {
+            // Hapus bukti pembayaran lama jika ada
+            if ($order->payment_proof_path) {
+                \Storage::disk('public')->delete($order->payment_proof_path);
+            }
+
+            // Simpan bukti pembayaran baru
+            $fileName = 'payment_proofs/' . uniqid() . '_' . $request->file('payment_proof')->getClientOriginalName();
+            $path = $request->file('payment_proof')->storeAs('public', $fileName);
+
+            // Update order dengan path bukti pembayaran
+            $order->update([
+                'payment_proof_path' => str_replace('public/', '', $path),
+                'payment_proof_uploaded_at' => now(),
+                'payment_status' => 'pending', // Menunggu verifikasi
+                'status' => 'processing' // Ubah status pesanan ke processing
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Payment proof uploaded successfully',
+            'data' => $order
+        ]);
+    }
+
+    /**
+     * Menampilkan bukti pembayaran
+     */
+    public function showPaymentProof($id)
+    {
+        $user = Auth::user();
+        $order = Order::findOrFail($id);
+
+        // Pastikan hanya pemilik pesanan atau admin yang bisa melihat bukti pembayaran
+        if ($order->user_id !== $user->id && !$user->isAdmin()) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        if (!$order->payment_proof_path) {
+            return response()->json([
+                'message' => 'Payment proof not found'
+            ], 404);
+        }
+
+        $path = storage_path('app/public/' . $order->payment_proof_path);
+
+        if (!file_exists($path)) {
+            return response()->json([
+                'message' => 'File payment proof not found'
+            ], 404);
+        }
+
+        return response()->download($path);
+    }
+
+    /**
+     * Upload bukti pemesanan (lama - untuk backward compatibility)
      */
     public function uploadProof(Request $request, $id)
     {

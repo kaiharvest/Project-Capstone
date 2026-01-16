@@ -27,8 +27,11 @@ class Order extends Model
         'status',
         'order_type',
         'notes',
-        'proof_image', // untuk bukti pembayaran
-        'design_image_path' // untuk menyimpan path gambar desain bordir dari user
+        'proof_image', // untuk bukti pembayaran (lama)
+        'design_image_path', // untuk menyimpan path gambar desain bordir dari user
+        'payment_proof_path', // bukti pembayaran baru
+        'payment_proof_uploaded_at', // waktu upload bukti pembayaran
+        'payment_status' // status verifikasi pembayaran
     ];
 
     /**
@@ -40,6 +43,7 @@ class Order extends Model
         'size_cm' => 'decimal:2',
         'total_price' => 'integer',
         'quantity' => 'integer',
+        'payment_proof_uploaded_at' => 'datetime',
     ];
 
     /**
@@ -96,5 +100,13 @@ class Order extends Model
     public function transaction()
     {
         return $this->hasOne(Transaction::class);
+    }
+
+    /**
+     * Get the payment proof URL
+     */
+    public function getPaymentProofUrlAttribute()
+    {
+        return $this->payment_proof_path ? asset('storage/' . $this->payment_proof_path) : null;
     }
 }
