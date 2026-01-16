@@ -55,8 +55,8 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="h-[calc(100vh-74px)] w-full flex bg-[#F7F7F7] items-center justify-center">
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg">
+    <div className="min-h-[calc(100vh-74px)] w-full flex bg-[#F7F7F7] items-center justify-center px-4 py-10">
+      <div className="max-w-md w-full bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
         <h1 className="text-center text-[#001243] font-extrabold text-2xl tracking-widest mb-6">
           RESET PASSWORD
         </h1>

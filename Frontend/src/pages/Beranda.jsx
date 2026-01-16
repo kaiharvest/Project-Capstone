@@ -1,5 +1,5 @@
 // src/components/Hero.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 // icons
 import leftArrow from "../assets/icons/left.svg";
@@ -50,29 +50,37 @@ export default function Beranda() {
     }, 200);
   };
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      nextImage();
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   return (
     <>
       {/* ================= HERO SECTION ================= */}
-      <section className="relative w-full h-[360px] md:h-[490px] overflow-hidden">
+      <section className="relative w-full h-[320px] sm:h-[400px] md:h-[520px] overflow-hidden">
         <img
           src={images[index]}
           alt="Beranda JA Bordir"
-          className={`w-full h-full object-cover brightness-75 transition-opacity duration-500 ${
+          className={`w-full h-full object-cover brightness-[0.68] transition-opacity duration-500 ${
             fade ? "opacity-0" : "opacity-100"
           }`}
         />
 
         {/* Text */}
-        <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-20 ml-6 text-white">
-          <h2 className="text-2xl md:text-4xl font-bold font-[Palanquin_Dark]">
+        <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-20 text-white">
+          <h2 className="text-base sm:text-xl md:text-3xl font-semibold font-[Palanquin_Dark]">
             Selamat datang di
           </h2>
 
-          <h1 className="text-4xl md:text-6xl font-bold font-[Palanquin_Dark]">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold font-[Palanquin_Dark]">
             JA Bordir
           </h1>
 
-          <p className="text-lg md:text-2xl font-[Palanquin]">
+          <p className="text-sm sm:text-lg md:text-xl font-[Palanquin]">
             Bordir apa saja bisa
           </p>
         </div>
@@ -95,15 +103,15 @@ export default function Beranda() {
       </section>
 
       {/* ================= PUSAT BORDIR ================= */}
-      <section className="w-full px-6 md:px-4 py-16 text-center">
+      <section className="w-full px-4 sm:px-6 md:px-4 py-12 sm:py-16 text-center">
         <h1
           style={{ fontFamily: '"Noto Sans Telugu", sans-serif' }}
-          className="text-3xl md:text-4xl font-bold text-[#010E31] mb-4"
+          className="text-xl sm:text-2xl md:text-3xl font-bold text-[#010E31] mb-3"
         >
           Pusat Bordir Komputer
         </h1>
 
-        <p className="max-w-5xl mx-auto text-[#6D6D6D] leading-relaxed text-sm md:text-base">
+        <p className="max-w-5xl mx-auto text-[#6D6D6D] leading-relaxed text-xs sm:text-sm md:text-base">
           JA Bordir, tempat di mana kualitas dan ketelitian menjadi prioritas
           utama dalam setiap hasil karya. Kami hadir untuk memenuhi kebutuhan
           bordir Anda dengan layanan yang profesional, mulai dari bordir
@@ -116,7 +124,7 @@ export default function Beranda() {
           mengerjakannya dengan penuh perhatian serta tanggung jawab.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-8 sm:mt-10 max-w-5xl mx-auto">
           {[bg2, bg3].map((img, i) => (
             <div
               key={i}
@@ -125,9 +133,9 @@ export default function Beranda() {
               <img
                 src={img}
                 alt={`Bordir ${i + 1}`}
-                className="w-full h-48 md:h-56 object-cover"
+                className="w-full h-40 sm:h-48 md:h-56 object-cover"
               />
-              <div className="bg-[#3E7CB1] text-white font-semibold py-3 text-lg">
+              <div className="bg-[#3E7CB1] text-white font-semibold py-2 sm:py-3 text-sm sm:text-base">
                 {i === 0 ? "Jasa Bordir Komputer" : "Bordir Partai Besar"}
               </div>
             </div>
@@ -136,31 +144,31 @@ export default function Beranda() {
       </section>
 
       {/* ================= LAYANAN ================= */}
-      <section className="w-full px-6 py-16 bg-white text-center">
+      <section className="w-full px-4 sm:px-6 py-12 sm:py-16 bg-white text-center">
         <h2
           style={{ fontFamily: '"Noto Sans Telugu", sans-serif' }}
-          className="text-3xl md:text-4xl font-bold text-[#3E7CB1]"
+          className="text-xl sm:text-2xl md:text-3xl font-bold text-[#3E7CB1]"
         >
           Layanan Bordir Kami
         </h2>
 
         <p
           style={{ fontFamily: '"Noto Sans Telugu", sans-serif' }}
-          className="mt-1 text-sm text-[#010E31]"
+          className="mt-1 text-xs sm:text-sm text-[#010E31]"
         >
           Pilih sesuai dengan kebutuhan anda
         </p>
 
-        <div className="max-w-6xl mx-auto mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+        <div className="max-w-6xl mx-auto mt-8 sm:mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 sm:gap-6">
           {[seragam, topi, emblem, jaket, tas].map((icon, i) => (
             <div
               key={i}
-              className="flex flex-col items-center border-2 border-[#81A4CD]/80 rounded-4xl p-6 hover:shadow-lg transition"
+              className="flex flex-col items-center border-2 border-[#81A4CD]/80 rounded-3xl p-4 sm:p-6 hover:shadow-lg transition"
             >
-              <img src={icon} alt="Layanan" className="w-16 md:w-24" />
+              <img src={icon} alt="Layanan" className="w-12 sm:w-16 md:w-24 opacity-80" />
               <p
                 style={{ fontFamily: '"Noto Sans Telugu", sans-serif' }}
-                className="mt-3 text-[#3E7CB1] font-semibold text-sm"
+                className="mt-3 text-[#3E7CB1] font-semibold text-[10px] sm:text-sm"
               >
                 {["Bordir Seragam", "Bordir Topi", "Bordir Emblem", "Bordir Jaket", "Bordir Tas"][i]}
               </p>
@@ -170,17 +178,17 @@ export default function Beranda() {
       </section>
 
       {/* ================= PORTOFOLIO ================= */}
-      <section className="bg-[#F17300] py-16 px-6 rounded-tl-4xl">
+      <section className="bg-[#F17300] py-12 sm:py-16 px-4 sm:px-6 rounded-tl-4xl">
         <div className="text-center mb-10 text-white">
-          <h2 className="text-3xl md:text-4xl font-bold">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">
             Portofolio JA Bordir
           </h2>
-          <p className="mt-2 text-sm md:text-base opacity-90">
+          <p className="mt-2 text-xs sm:text-sm md:text-base opacity-90">
             Setiap hasil karya JA Bordir dibuat dengan presisi
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
             {[
               porto,
               porto1,
@@ -198,15 +206,15 @@ export default function Beranda() {
                 <img
                   src={img}
                   alt={`Portofolio ${i + 1}`}
-                  className="w-140 h-65 object-cover block"
+                  className="w-full h-full object-cover block"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
               </div>
             ))}
           </div>
 
-        <div className="flex justify-center mt-10">
-          <button className="bg-[#3E7CB1] hover:bg-[#356a99] text-white font-semibold px-10 py-3 rounded-lg shadow-lg transition">
+        <div className="flex justify-center mt-8 sm:mt-10">
+          <button className="bg-[#3E7CB1] hover:bg-[#356a99] text-white font-semibold px-8 sm:px-10 py-2.5 sm:py-3 rounded-lg shadow-lg transition">
             Lihat Lengkap
           </button>
         </div>

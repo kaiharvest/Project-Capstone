@@ -70,14 +70,14 @@ export default function Keranjang() {
 
   return (
     <div className="min-h-screen bg-white">
-      <main className="px-6 py-10 max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-center text-slate-700 mb-10">Keranjang Saya</h1>
+      <main className="px-4 sm:px-6 py-10 max-w-6xl mx-auto">
+        <h1 className="text-2xl sm:text-4xl font-bold text-center text-slate-700 mb-8 sm:mb-10">Keranjang Saya</h1>
 
         <div className="space-y-6">
           {items.map((it) => (
             <div
               key={it.id}
-              className="flex items-center gap-4 bg-white rounded-2xl shadow-lg p-5"
+              className="flex flex-col md:flex-row md:items-center gap-4 bg-white rounded-2xl shadow-lg p-5"
               /* items-center ensures vertical center alignment across left & right */
             >
               {/* checkbox */}
@@ -113,17 +113,17 @@ export default function Keranjang() {
               </div>
 
               {/* right content - ensure items vertically centered */}
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 w-full md:w-auto">
                 {/* qty label (desktop) */}
                 <div className="hidden md:block text-slate-600 font-semibold">{it.qty}x</div>
 
                 {/* Lihat File */}
-                <button onClick={() => openPreview(it)} className="px-4 py-2 rounded-xl bg-sky-100 text-slate-800 font-semibold shadow-sm">
+                <button onClick={() => openPreview(it)} className="px-4 py-2 rounded-xl bg-sky-100 text-slate-800 font-semibold shadow-sm w-full sm:w-auto">
                   Lihat File
                 </button>
 
                 {/* price pill */}
-                <div className="min-w-[220px] px-6 py-3 rounded-xl bg-slate-200 text-slate-700 font-semibold">
+                <div className="w-full sm:min-w-[220px] px-6 py-3 rounded-xl bg-slate-200 text-slate-700 font-semibold text-center sm:text-left">
                   {formatIDR(it.pricePerItem * it.qty)}
                 </div>
 
@@ -151,12 +151,12 @@ export default function Keranjang() {
 
         {/* total box */}
         <div className="mt-10 flex justify-end">
-          <div className="flex items-center gap-4 rounded-xl shadow-xl" style={{ backgroundColor: "#F17300" }}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 rounded-xl shadow-xl" style={{ backgroundColor: "#F17300" }}>
             <div className="px-6 py-5 text-white">
               <div className="text-sm">Total</div>
               <div className="text-2xl font-bold">{formatIDR(total)}</div>
             </div>
-            <button onClick={handleCheckout} className="mr-4 ml-2 px-6 py-3 rounded-full bg-green-500 text-white font-semibold hover:brightness-95">Pesan</button>
+            <button onClick={handleCheckout} className="mb-4 sm:mb-0 sm:mr-4 sm:ml-2 px-6 py-3 rounded-full bg-green-500 text-white font-semibold hover:brightness-95">Pesan</button>
           </div>
         </div>
       </main>

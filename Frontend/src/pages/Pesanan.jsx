@@ -1,7 +1,6 @@
 // Pesanan.jsx
 import React, { useEffect, useState, useRef } from "react";
 
-
 const TABS = [
   { key: "menunggu", label: "Menunggu", color: "#F79A19" },
   { key: "diproses", label: "Diproses", color: "#FFE52A" },
@@ -9,7 +8,9 @@ const TABS = [
 ];
 
 export default function Pesanan() {
+  // STATUS DIKONTROL BACKEND (READ-ONLY)
   const [activeTab, setActiveTab] = useState("menunggu");
+
   const [showPreview, setShowPreview] = useState(false);
 
   const orderNumber = "20252812REG110975543333333";
@@ -33,6 +34,18 @@ export default function Pesanan() {
       if (localUrl) URL.revokeObjectURL(localUrl);
     };
   }, [localUrl]);
+
+  // CONTOH: STATUS & FILE DARI BACKEND
+  // useEffect(() => {
+  //   async function fetchData() {
+  //     const res = await fetch("/api/pesanan/123");
+  //     const data = await res.json();
+  //     setActiveTab(data.status); // "menunggu" | "diproses" | "selesai"
+  //     setProofFileName(data.proofFileName);
+  //     setProofFileUrl(data.proofFileUrl);
+  //   }
+  //   fetchData();
+  // }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -63,20 +76,22 @@ export default function Pesanan() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* ===== MAIN CONTENT ===== */}
-      <main className="flex-1 px-6 py-10">
+      <main className="flex-1 px-4 sm:px-6 py-10">
         <div className="max-w-6xl mx-auto">
-          {/* TABS */} 
-          <div className="flex gap-4 mb-8">
+          {/* ===== TABS (READ-ONLY) ===== */}
+          <div className="flex flex-wrap gap-3 mb-8">
             {TABS.map((tab) => {
               const active = activeTab === tab.key;
               return (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  disabled
                   style={active && tab.color ? { backgroundColor: tab.color } : {}}
-                  className={`px-5 py-2 rounded-full font-semibold transition ${
-                    active ? "text-black" : "bg-slate-200 text-slate-500"
-                  }`}
+                  className={`px-5 py-2 rounded-full font-semibold ${
+                    active
+                      ? "text-black"
+                      : "bg-slate-200 text-slate-500"
+                  } cursor-not-allowed`}
                 >
                   {tab.label}
                 </button>
@@ -84,9 +99,9 @@ export default function Pesanan() {
             })}
           </div>
 
-          {/* CARD */}
+          {/* ===== CARD ===== */}
           <div
-            className="rounded-3xl p-8 shadow-lg"
+            className="rounded-3xl p-5 sm:p-8 shadow-lg"
             style={{ backgroundColor: "#F17300" }}
           >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -108,7 +123,7 @@ export default function Pesanan() {
                     Bukti Pemesanan
                   </label>
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <input
                       readOnly
                       value={proofFileName}
@@ -122,7 +137,7 @@ export default function Pesanan() {
                           ? handleDownload()
                           : fileRef.current.click()
                       }
-                      className="px-5 py-2 rounded-full bg-slate-900 text-white"
+                      className="px-5 py-2 rounded-full bg-slate-900 text-white w-full sm:w-auto"
                     >
                       {proofFileUrl ? "Unduh" : "Unggah"}
                     </button>
@@ -149,12 +164,14 @@ export default function Pesanan() {
                   !proofFileUrl && "opacity-60 cursor-default"
                 }`}
               >
-                <span className="font-semibold text-gray-600">Lihat File</span>
+                <span className="font-semibold text-gray-600">
+                  Lihat File
+                </span>
               </div>
             </div>
           </div>
 
-          {/* STATUS */}
+          {/* STATUS TEXT */}
           <div className="mt-6">
             <strong>Status:</strong>{" "}
             {activeTab === "menunggu"
@@ -165,8 +182,6 @@ export default function Pesanan() {
           </div>
         </div>
       </main>
-
-      {/* ===== FOOTER (FIXED POSITION) ===== */}
 
       {/* ===== MODAL PREVIEW ===== */}
       {showPreview && (

@@ -8,7 +8,7 @@ const Profil = () => {
     <>
       <section className="py-16">
         {/* CONTAINER */}
-        <div className="max-w-5xl mx-auto px-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
           {/* ================= PROFIL ================= */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             {/* IMAGE */}
@@ -72,7 +72,7 @@ const Profil = () => {
                 <iframe
                   title="Lokasi JA Bordir"
                   src="https://www.google.com/maps?q=Purwodadi,Jawa%20Tengah&output=embed"
-                  className="w-full h-[360px] border-0"
+                  className="w-full h-64 sm:h-80 md:h-[360px] border-0"
                   loading="lazy"
                 />
               </div>

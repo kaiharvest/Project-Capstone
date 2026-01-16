@@ -35,7 +35,7 @@ export default function Portofolio() {
     <>
       {/* ===== SECTION PORTOFOLIO ===== */}
       <section className="w-full py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Judul */}
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-bold text-[#3E7CB1] font-[Palanquin_Dark]">
@@ -65,7 +65,7 @@ export default function Portofolio() {
                 <img
                   src={img}
                   alt={`Portofolio ${i + 1}`}
-                  className="w-140 h-65 object-cover block"
+                  className="w-full h-full object-cover block"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
               </div>

@@ -33,15 +33,15 @@ const Akun = () => {
   // Menampilkan pesan loading jika data user belum siap
   if (!user) {
     return (
-      <div className="h-[calc(100vh-74px)] flex items-center justify-center">
+      <div className="min-h-[calc(100vh-74px)] flex items-center justify-center px-4">
         <p>Loading...</p>
       </div>
     );
   }
 
   return (
-    <section className="bg-gray-100 h-[calc(100vh-74px)] py-16 flex items-center justify-center">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+    <section className="bg-gray-100 min-h-[calc(100vh-74px)] py-12 sm:py-16 flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 sm:p-8">
         <h1 className="text-center text-[#001243] font-extrabold text-2xl tracking-widest mb-6">
           PROFIL PENGGUNA
         </h1>

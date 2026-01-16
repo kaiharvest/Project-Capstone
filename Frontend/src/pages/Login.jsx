@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import toast from "react-hot-toast";
+import { ArrowLeft } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -43,20 +44,26 @@ export default function Login() {
       {/* BACK BUTTON */}
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-6 left-6 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-[#010E31]/90 text-white text-xl shadow-lg hover:bg-[#010E31] cursor-pointer"
+        className="fixed top-4 left-4 sm:top-6 sm:left-6 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-[#010E31]/90 text-white shadow-lg hover:bg-[#010E31] transition cursor-pointer"
       >
-        &lt;
+        <ArrowLeft size={20} strokeWidth={2.5} />
       </button>
 
-      <div className="h-screen w-full flex overflow-hidden">
+      <div className="min-h-screen w-full flex flex-col lg:flex-row">
         {/* LEFT SIDE */}
         <div className="hidden lg:flex w-1/2 h-full bg-[#010E31] p-12 flex-col justify-center">
           <div className="max-w-md mx-auto text-left">
             <div className="text-white font-black tracking-wider text-7xl leading-none">
-              <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">JA</span>
-              <span className="text-[#F17300] mx-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">•</span>
+              <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">
+                JA
+              </span>
+              <span className="text-[#F17300] mx-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">
+                •
+              </span>
               <br />
-              <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">Bordir</span>
+              <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">
+                Bordir
+              </span>
             </div>
 
             <h2 className="text-[#B9C6DA] font-medium text-lg mt-4 mb-6 drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
@@ -64,15 +71,15 @@ export default function Login() {
             </h2>
 
             <p className="text-[#B9C6DA]/80 text-base leading-relaxed">
-              Dari seragam hingga desain custom, kami hadir untuk memberikan hasil
-              bordir yang rapi, kuat, dan estetik. Setiap pesanan adalah amanah
-              yang kami kerjakan dengan penuh tanggung jawab.
+              Dari seragam hingga desain custom, kami hadir untuk memberikan
+              hasil bordir yang rapi, kuat, dan estetik. Setiap pesanan adalah
+              amanah yang kami kerjakan dengan penuh tanggung jawab.
             </p>
           </div>
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="flex-1 bg-[#F7F7F7] px-20 py-10 flex flex-col justify-center overflow-hidden">
+        <div className="flex-1 bg-[#F7F7F7] px-6 sm:px-10 lg:px-20 py-10 flex flex-col justify-center">
           <div className="max-w-md w-full mx-auto">
             <h1 className="text-center text-[#001243] font-extrabold text-2xl tracking-widest mb-10">
               LOGIN
