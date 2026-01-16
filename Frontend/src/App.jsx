@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import MainLayout from "./components/MainLayout";
@@ -13,6 +13,7 @@ import Pesan from "./pages/Pesan";
 import Pesanan from "./pages/Pesanan";
 import Keranjang from "./pages/Keranjang";
 import Akun from "./pages/Akun";
+import Pembayaran from "./pages/Pembayaran";
 
 // AUTH
 import Login from "./pages/Login";
@@ -30,6 +31,18 @@ import StatusTransaksi from "./pages/Admin/StatusTransaksi";
 import EditProfil from "./pages/Admin/EditProfil";
 
 function App() {
+  const RequireAuth = ({ children }) => {
+    const location = useLocation();
+    const token = localStorage.getItem("access_token");
+    const user = localStorage.getItem("user");
+
+    if (!token || !user) {
+      return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
+    return children;
+  };
+
   return (
     <>
       <Toaster position="top-center" />
@@ -41,9 +54,38 @@ function App() {
           <Route path="/profil" element={<Profil />} />
           <Route path="/portofolio" element={<Portofolio />} />
           <Route path="/pesan" element={<Pesan />} />
-          <Route path="/pesanan" element={<Pesanan />} />
-          <Route path="/keranjang" element={<Keranjang />} />
-          <Route path="/akun" element={<Akun />} />
+          <Route
+            path="/pesanan"
+            element={
+              <RequireAuth>
+                <Pesanan />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/keranjang"
+            element={
+              <RequireAuth>
+                <Keranjang />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/akun"
+            element={
+              <RequireAuth>
+                <Akun />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/pembayaran"
+            element={
+              <RequireAuth>
+                <Pembayaran />
+              </RequireAuth>
+            }
+          />
         </Route>
 
         {/* ===== AUTH ===== */}

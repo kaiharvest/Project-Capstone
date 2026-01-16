@@ -12,23 +12,23 @@ export default function Footer() {
       </div>
 
       {/* Isi Footer */}
-      <div className="max-w-7xl mx-auto px-14 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Kolom 1 */}
-        <div>
+        <div className="text-center md:text-left">
           <h3 className="font-semibold text-lg mb-3 ">JA BORDIR</h3>
           <p className="text-sm leading-relaxed opacity-50">
             Jasa Bordir Komputer Sejak 2015 <br />
             Profesional dan Berpengalaman
           </p>
 
-          <div className="flex items-center gap-2 mt-4 text-sm opacity-50">
+          <div className="flex items-center justify-center md:justify-start gap-2 mt-4 text-sm opacity-50">
             <Clock size={16} />
             <span>Mon-Sat 08.00am - 04.00pm WIB</span>
           </div>
         </div>
 
         {/* Kolom 2 */}
-        <div>
+        <div className="text-center md:text-left">
           <h3 className="font-semibold text-lg mb-3">LAYANAN JA BORDIR</h3>
           <ul className="space-y-1 text-sm opacity-50">
             <li>Bordir Seragam</li>
@@ -40,7 +40,7 @@ export default function Footer() {
         </div>
 
         {/* Kolom 3 */}
-        <div>
+        <div className="text-center md:text-left">
           <h3 className="font-semibold text-lg mb-3">ALAMAT JA BORDIR</h3>
           <p className="text-sm opacity-50">Purwodadi, Jawa Tengah</p>
           <p className="text-sm">
@@ -52,11 +52,11 @@ export default function Footer() {
         </div>
 
         {/* Kolom 4 */}
-        <div>
+        <div className="text-center md:text-left">
           <h3 className="font-semibold text-lg mb-3">CUSTOMER SERVICE</h3>
           <p className="text-sm opacity-50">Contact via WhatsApp</p>
 
-          <div className="flex items-center gap-2 text-sm mt-2 opacity-50">
+          <div className="flex items-center justify-center md:justify-start gap-2 text-sm mt-2 opacity-50">
             <Phone size={16} />
             <span>Admin: 082020200200</span>
           </div>
