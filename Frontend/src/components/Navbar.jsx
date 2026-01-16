@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
-import { CircleUserRound } from "lucide-react";
+import { NavLink, Link, useLocation } from "react-router-dom";
 import logo from "../assets/logo.png";
 import searchIcon from "../assets/icons/search.svg";
 import cartIcon from "../assets/icons/shop.svg";
@@ -16,11 +15,9 @@ export default function Navbar() {
   // const userNormalClass = "p-2 rounded-full hover:opacity-90";
 
   const { pathname } = useLocation();
-  const navigate = useNavigate();
 
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
     // Memeriksa status login saat komponen di-mount
@@ -33,16 +30,9 @@ export default function Navbar() {
     }
   }, [pathname]); // Jalankan ulang effect jika pathname berubah (misal setelah login/logout)
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
-    setLoggedInUser(null);
-    setIsUserMenuOpen(false);
-    navigate("/login");
-  };
 
   return (
-    <nav className="bg-[#010E31] text-[#81A4CD]">
+    <nav className="bg-[#010E31] text-[#81A4CD] shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         {/* === LOGO === */}
         <NavLink to="/" className="flex items-center gap-2">
@@ -133,34 +123,12 @@ export default function Navbar() {
 
           {/* Login Button / User Profile Link */}
           {loggedInUser ? (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition"
-                aria-label="Menu akun"
-              >
-                <CircleUserRound size={22} />
-              </button>
-              {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-200 overflow-hidden">
-                  <Link
-                    to="/akun"
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                  >
-                    Kelola Akun
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
+            <Link
+              to="/akun"
+              className="text-white bg-orange-500 hover:bg-orange-600 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200"
+            >
+              {loggedInUser.name}
+            </Link>
           ) : (
             <Link
               to="/login"
@@ -187,7 +155,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsMenuOpen(false)}
-                className="text-white px-3 py-2 rounded-md hover:bg-slate-800"
+                className="text-white px-3 py-2 hover:bg-slate-800"
                 aria-label="Tutup menu"
               >
                 ✕
@@ -283,40 +251,13 @@ export default function Navbar() {
 
             <div className="mt-8">
               {loggedInUser ? (
-                <div className="flex flex-col items-center">
-                  <button
-                    type="button"
-                    onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                    className="w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition"
-                    aria-label="Menu akun"
-                  >
-                    <CircleUserRound size={24} />
-                  </button>
-                  {isUserMenuOpen && (
-                    <div className="mt-3 w-full rounded-xl bg-white shadow-lg border border-slate-200 overflow-hidden">
-                      <Link
-                        to="/akun"
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          setIsMenuOpen(false);
-                        }}
-                        className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                      >
-                        Kelola Akun
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleLogout();
-                          setIsMenuOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <Link
+                  to="/akun"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-full text-center text-white bg-orange-500 hover:bg-orange-600 rounded-full px-4 py-3 text-base font-semibold transition-colors duration-200 block"
+                >
+                  {loggedInUser.name}
+                </Link>
               ) : (
                 <Link
                   to="/login"
