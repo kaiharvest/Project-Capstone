@@ -202,7 +202,7 @@ export default function Register() {
                     <button
                       type="button"
                       onClick={() => setShowPass((v) => !v)}
-                      className="ml-3 opacity-60 hover:opacity-90"
+                      className="ml-3 opacity-60 hover:opacity-90 cursor-pointer"
                       aria-label="Toggle password"
                     >
                       <svg
@@ -244,7 +244,7 @@ export default function Register() {
                     <button
                       type="button"
                       onClick={() => setShowConfirm((v) => !v)}
-                      className="ml-3 opacity-60 hover:opacity-90"
+                      className="ml-3 opacity-60 hover:opacity-90 cursor-pointer"
                       aria-label="Toggle confirm password"
                     >
                       <svg
@@ -271,7 +271,7 @@ export default function Register() {
 
                 <button
                   type="submit"
-                  className="w-full h-11 rounded-full bg-[#3E78A9] text-white font-semibold shadow-md mt-2"
+                  className="w-full h-11 rounded-full bg-[#3E78A9] text-white font-semibold shadow-md mt-2 cursor-pointer"
                 >
                   Register
                 </button>

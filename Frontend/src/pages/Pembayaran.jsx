@@ -92,7 +92,7 @@ export default function Pembayaran() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-6">
       <div className="w-full max-w-5xl rounded-3xl bg-orange-500 p-6 md:p-8 shadow-lg">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {/* LEFT: FORM */}

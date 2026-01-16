@@ -79,7 +79,7 @@ export default function Pesanan() {
       <main className="flex-1 px-4 sm:px-6 py-10">
         <div className="max-w-6xl mx-auto">
           {/* ===== TABS (READ-ONLY) ===== */}
-          <div className="flex flex-wrap gap-3 mb-8">
+          <div className="flex flex-wrap gap-3 mb-6">
             {TABS.map((tab) => {
               const active = activeTab === tab.key;
               return (
@@ -101,12 +101,12 @@ export default function Pesanan() {
 
           {/* ===== CARD ===== */}
           <div
-            className="rounded-3xl p-5 sm:p-8 shadow-lg"
+            className="rounded-3xl p-4 sm:p-6 shadow-lg"
             style={{ backgroundColor: "#F17300" }}
           >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               {/* LEFT */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-2 space-y-4">
                 <div>
                   <label className="text-white font-semibold block mb-2">
                     Nomor Pemesanan
@@ -114,7 +114,7 @@ export default function Pesanan() {
                   <input
                     readOnly
                     value={orderNumber}
-                    className="w-full rounded-full px-6 py-3 bg-white shadow-sm border border-white/60"
+                    className="w-full rounded-full px-5 py-2.5 bg-white shadow-sm border border-white/60 text-sm text-slate-700"
                   />
                 </div>
 
@@ -123,24 +123,27 @@ export default function Pesanan() {
                     Bukti Pemesanan
                   </label>
 
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <input
-                      readOnly
-                      value={proofFileName}
-                      placeholder="Belum ada bukti"
-                      className="flex-1 rounded-full px-6 py-3 bg-white shadow-sm border border-white/60"
-                    />
+                  <div className="flex flex-col sm:flex-row gap-3 items-center">
+                    <div className="flex-1 rounded-full px-5 py-2.5 bg-white shadow-sm border border-white/60 text-sm text-slate-500 truncate">
+                      {proofFileName || "Belum ada file desain"}
+                    </div>
 
-                    <button
-                      onClick={() =>
-                        proofFileUrl
-                          ? handleDownload()
-                          : fileRef.current.click()
-                      }
-                      className="px-5 py-2 rounded-full bg-slate-900 text-white w-full sm:w-auto"
-                    >
-                      {proofFileUrl ? "Unduh" : "Unggah"}
-                    </button>
+                    {proofFileUrl ? (
+                      <button
+                        onClick={handleDownload}
+                        className="px-6 py-2 rounded-full text-white w-full sm:w-auto transition bg-slate-900 hover:bg-slate-800"
+                      >
+                        Unduh
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="px-6 py-2 rounded-full w-full sm:w-auto bg-slate-300 text-slate-600"
+                      >
+                        Unduh
+                      </button>
+                    )}
                   </div>
 
                   <input
@@ -160,19 +163,18 @@ export default function Pesanan() {
               {/* RIGHT */}
               <div
                 onClick={() => proofFileUrl && setShowPreview(true)}
-                className={`h-44 rounded-xl bg-white flex items-center justify-center cursor-pointer ${
-                  !proofFileUrl && "opacity-60 cursor-default"
+                className={`h-32 sm:h-36 rounded-xl bg-white flex items-center justify-center cursor-pointer transition ${
+                  proofFileUrl ? "hover:shadow-md" : "opacity-60 cursor-default"
                 }`}
+                title={proofFileUrl ? "Lihat File" : "Belum ada file"}
               >
-                <span className="font-semibold text-gray-600">
-                  Lihat File
-                </span>
+                <span className="font-semibold text-gray-600">Lihat File</span>
               </div>
             </div>
           </div>
 
           {/* STATUS TEXT */}
-          <div className="mt-6">
+          <div className="mt-4 text-sm">
             <strong>Status:</strong>{" "}
             {activeTab === "menunggu"
               ? "Menunggu konfirmasi"
