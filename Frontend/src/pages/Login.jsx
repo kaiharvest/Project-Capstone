@@ -44,12 +44,12 @@ export default function Login() {
       {/* BACK BUTTON */}
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-4 left-4 sm:top-6 sm:left-6 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-[#010E31]/90 text-white shadow-lg hover:bg-[#010E31] transition cursor-pointer"
+        className="fixed top-6 left-6 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-[#010E31]/90 text-white shadow-lg hover:bg-[#010E31] transition cursor-pointer"
       >
         <ArrowLeft size={20} strokeWidth={2.5} />
       </button>
 
-      <div className="min-h-screen w-full flex flex-col lg:flex-row">
+      <div className="h-screen w-full flex overflow-hidden">
         {/* LEFT SIDE */}
         <div className="hidden lg:flex w-1/2 h-full bg-[#010E31] p-12 flex-col justify-center">
           <div className="max-w-md mx-auto text-left">
@@ -79,7 +79,7 @@ export default function Login() {
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="flex-1 bg-[#F7F7F7] px-6 sm:px-10 lg:px-20 py-10 flex flex-col justify-center">
+        <div className="flex-1 bg-[#F7F7F7] px-20 py-10 flex flex-col justify-center overflow-hidden">
           <div className="max-w-md w-full mx-auto">
             <h1 className="text-center text-[#001243] font-extrabold text-2xl tracking-widest mb-10">
               LOGIN

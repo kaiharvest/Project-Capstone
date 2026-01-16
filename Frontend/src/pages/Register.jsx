@@ -13,6 +13,7 @@ export default function Register() {
   const [no_telpon, setNoTelpon] = useState("");
   const [email, setEmail] = useState("");
   const [alamat, setAlamat] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [password_confirmation, setPasswordConfirmation] = useState("");
 
@@ -40,6 +41,7 @@ export default function Register() {
         no_telpon,
         email,
         alamat,
+        username,
         password,
         password_confirmation,
       });
@@ -65,13 +67,13 @@ export default function Register() {
       {/* BACK BUTTON */}
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-4 left-4 sm:top-6 sm:left-6 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-[#010E31]/90 text-white shadow-lg hover:bg-[#010E31] hover:scale-105 transition-all cursor-pointer"
+        className="fixed top-6 left-6 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-[#010E31]/90 text-white shadow-lg hover:bg-[#010E31] hover:scale-105 transition-all cursor-pointer"
         aria-label="Kembali"
       >
         <ArrowLeft size={20} strokeWidth={2.5} />
       </button>
 
-      <div className="min-h-screen w-full flex flex-col lg:flex-row">
+      <div className="h-screen w-full flex overflow-hidden">
         {/* LEFT SIDE */}
         <div className="hidden lg:flex w-1/2 h-full bg-[#010E31] p-12 flex-col justify-center">
           <div className="max-w-md mx-auto text-left">
@@ -102,7 +104,7 @@ export default function Register() {
 
         {/* RIGHT SIDE (SCROLL DI KANAN SAJA) */}
         <div className="flex-1 h-full bg-[#F7F7F7] overflow-hidden">
-          <div className="h-full overflow-y-auto px-6 sm:px-10 lg:px-20 py-10 pb-24">
+          <div className="h-full overflow-y-auto px-20 py-10 pb-24">
             <div className="max-w-md w-full mx-auto">
               <h1 className="text-center text-[#010E31] font-extrabold text-2xl tracking-widest mb-10">
                 REGISTER
@@ -166,6 +168,20 @@ export default function Register() {
                     value={alamat}
                     onChange={(e) => setAlamat(e.target.value)}
                     required
+                  />
+                </div>
+
+                {/* Username */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 mb-2">
+                    Username:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Masukkan username anda"
+                    className="w-full h-10 rounded-full bg-white px-5 text-sm text-gray-700 placeholder:text-gray-300 shadow-md border border-gray-200 outline-none"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                   />
                 </div>
 

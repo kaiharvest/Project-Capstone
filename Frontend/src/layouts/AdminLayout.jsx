@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -23,6 +23,13 @@ const menuItems = [
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
     <div className="w-[280px] bg-gradient-to-b from-[#0B1A3A] to-[#06122B] h-screen px-5 py-6 flex flex-col">
@@ -54,7 +61,10 @@ const Sidebar = () => {
         })}
       </nav>
 
-      <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors mt-8 w-[120px]">
+      <button
+        onClick={handleLogout}
+        className="flex items-center justify-center gap-2 px-4 py-2.5 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors mt-8 w-[120px]"
+      >
         <LogOut size={18} />
         <span className="text-sm font-semibold">Keluar</span>
       </button>
