@@ -479,40 +479,40 @@ const EditProdukPage = () => {
 // Kelola User Component
 const KelolaUserPage = () => {
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <Users className="text-slate-700" size={32} />
-          <h1 className="text-3xl font-bold text-slate-900">Data User</h1>
+          <Users className="text-blue-700" size={28} />
+          <h1 className="text-2xl font-bold text-blue-900">Data User</h1>
         </div>
-        <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+        <button className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-sm hover:bg-blue-700 transition-colors">
           257 Pengguna Terdaftar
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-blue-50">
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Username</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Nama Lengkap</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Email</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">No. HP</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Alamat</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-blue-900">Aksi</th>
+      <div className="bg-white rounded-xl border border-blue-400 shadow-sm overflow-x-auto">
+        <table className="w-full text-sm min-w-[720px]">
+          <thead className="bg-blue-50 border-b border-blue-300">
+            <tr className="text-blue-800">
+              <th className="px-4 py-2 text-left font-semibold">Username</th>
+              <th className="px-4 py-2 text-left font-semibold">Nama Lengkap</th>
+              <th className="px-4 py-2 text-left font-semibold">Email</th>
+              <th className="px-4 py-2 text-left font-semibold">No. HP</th>
+              <th className="px-4 py-2 text-left font-semibold">Alamat</th>
+              <th className="px-4 py-2 text-center font-semibold">Aksi</th>
             </tr>
           </thead>
           <tbody>
             {mockUsers.map((user) => (
-              <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-6 py-4 text-sm text-blue-600">{user.username}</td>
-                <td className="px-6 py-4 text-sm text-blue-600">{user.name}</td>
-                <td className="px-6 py-4 text-sm text-blue-600">{user.email}</td>
-                <td className="px-6 py-4 text-sm text-blue-600">{user.phone}</td>
-                <td className="px-6 py-4 text-sm text-blue-600">{user.alamat}</td>
-                <td className="px-6 py-4">
-                  <button className="text-red-500 hover:text-red-700">
-                    <Trash2 size={20} />
+              <tr key={user.id} className="border-b border-blue-200 text-blue-700">
+                <td className="px-4 py-2">{user.username}</td>
+                <td className="px-4 py-2">{user.name}</td>
+                <td className="px-4 py-2">{user.email}</td>
+                <td className="px-4 py-2">{user.phone}</td>
+                <td className="px-4 py-2">{user.alamat}</td>
+                <td className="px-4 py-2 text-center">
+                  <button className="text-red-500 hover:text-red-600">
+                    <Trash2 size={18} />
                   </button>
                 </td>
               </tr>

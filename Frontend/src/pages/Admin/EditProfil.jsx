@@ -84,66 +84,69 @@ const EditProfil = () => {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <UserCircle className="text-slate-700" size={32} />
-        <h1 className="text-3xl font-bold text-slate-900">Edit Profil Perusahaan</h1>
+    <div className="p-4 sm:p-8">
+      <div className="mb-6">
+        <div className="flex items-center gap-3">
+          <UserCircle className="text-blue-700" size={26} />
+          <h1 className="text-2xl font-bold text-blue-900">Edit Profil Perusahaan</h1>
+        </div>
+        <p className="text-sm text-slate-500 mt-1">Update Profil Anda</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-md p-8">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 max-w-4xl w-full">
         {showSuccessPopup && (
-          <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-6 flex items-center gap-3">
-            <FileCheck className="text-green-600" size={24} />
-            <p className="text-green-800 font-medium">Profil Perusahaan Anda Berhasil Diupdate</p>
+          <div className="bg-green-500 text-white rounded-lg p-3 mb-5 flex items-center gap-2">
+            <FileCheck className="text-white" size={18} />
+            <p className="font-semibold text-sm">Profil Perusahaan Anda Berhasil Diupdate</p>
           </div>
         )}
         
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div>
-            <label className="block text-slate-700 font-semibold mb-2">Deskripsi Perusahaan</label>
+            <label className="block text-slate-600 font-semibold text-sm mb-2">Deskripsi Perusahaan</label>
             <textarea
               value={profile.description}
               onChange={(e) => setProfile({...profile, description: e.target.value})}
-              className={`w-full border ${errors.description ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-3 h-48`}
+              className={`w-full border ${errors.description ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-3 h-40`}
             />
-            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+            {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
           </div>
 
           <div>
-            <label className="block text-slate-700 font-semibold mb-2">Alamat</label>
+            <label className="block text-slate-600 font-semibold text-sm mb-2">Alamat</label>
             <input
               type="text"
               value={profile.address}
               onChange={(e) => setProfile({...profile, address: e.target.value})}
-              className={`w-full border ${errors.address ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-3`}
+              className={`w-full border ${errors.address ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-2.5`}
             />
-            {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+            {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
           </div>
 
           <div>
-            <label className="block text-slate-700 font-semibold mb-2">Link Google Maps</label>
+            <label className="block text-slate-600 font-semibold text-sm mb-2">Link Google Maps</label>
             <input
               type="text"
               value={profile.mapsLink}
               onChange={(e) => setProfile({...profile, mapsLink: e.target.value})}
-              className={`w-full border ${errors.mapsLink ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-3`}
+              className={`w-full border ${errors.mapsLink ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-2.5`}
             />
-            {errors.mapsLink && <p className="text-red-500 text-sm mt-1">{errors.mapsLink}</p>}
+            {errors.mapsLink && <p className="text-red-500 text-xs mt-1">{errors.mapsLink}</p>}
           </div>
 
           <div>
-            <label className="block text-slate-700 font-semibold mb-2">Nomor Telepon</label>
+            <label className="block text-slate-600 font-semibold text-sm mb-2">Nomor Telepon</label>
             <input
               type="text"
               value={profile.phone}
               onChange={(e) => setProfile({...profile, phone: e.target.value})}
-              className={`w-full border ${errors.phone ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-3`}
+              className={`w-full border ${errors.phone ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-2.5`}
             />
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
           </div>
 
           <button 
-            className="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+            className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors"
             onClick={handleSaveChanges}
           >
             Simpan Perubahan

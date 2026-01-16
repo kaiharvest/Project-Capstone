@@ -366,47 +366,55 @@ const StatusBarangPage = () => {
 // Status Transaksi Component
 const StatusTransaksiPage = () => {
   return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <ShoppingCart className="text-slate-700" size={32} />
-        <h1 className="text-3xl font-bold text-slate-900">Status Transaksi</h1>
+    <div className="p-4 sm:p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <ShoppingCart className="text-blue-800" size={26} />
+        <h1 className="text-2xl font-bold text-blue-900">Status Transaksi</h1>
       </div>
 
-      <div className="space-y-4">
-        {mockOrders.slice(0, 3).map((order, i) => (
-          <div key={i} className="bg-white rounded-2xl shadow-md p-6">
-            <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2 space-y-2 text-sm">
-                <p><span className="font-semibold">No. Pemesanan:</span> {order.id}</p>
-                <p><span className="font-semibold">Nama Pelanggan:</span> {order.customer}</p>
-                <p><span className="font-semibold">Alamat:</span> {order.address}</p>
-                <p><span className="font-semibold">Nomor HP:</span> {order.phone}</p>
-                <p><span className="font-semibold">Kategori Bordir:</span> {order.category}</p>
-                <p><span className="font-semibold">Jenis Bordir:</span> {order.type}</p>
-                <p><span className="font-semibold">Ukuran:</span> {order.size}</p>
-                <p><span className="font-semibold">Jumlah:</span> {order.quantity}</p>
-                <p><span className="font-semibold">Metode Pengiriman:</span> {order.method}</p>
-                <p><span className="font-semibold">Metode pembayaran:</span> {order.payment}</p>
-                <p><span className="font-semibold">Total Pembayaran:</span> Rp{order.total.toLocaleString('id-ID')}</p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <Eye size={18} />
-                  Lihat File
-                </button>
-                <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <FileCheck size={18} />
-                  Bukti Pembayaran
-                </button>
-                <button className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2 mt-4">
-                  <FileCheck size={20} />
-                  <span className="font-semibold">Verifikasi Pesanan</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+        <table className="w-full text-xs min-w-[900px]">
+          <thead className="bg-slate-100 text-slate-700">
+            <tr>
+              <th className="px-4 py-3 text-left font-semibold">No. Pemesanan</th>
+              <th className="px-4 py-3 text-left font-semibold">Pelanggan</th>
+              <th className="px-4 py-3 text-left font-semibold">No. HP</th>
+              <th className="px-4 py-3 text-left font-semibold">Alamat</th>
+              <th className="px-4 py-3 text-left font-semibold">Detail</th>
+              <th className="px-4 py-3 text-left font-semibold">Pembayaran</th>
+              <th className="px-4 py-3 text-left font-semibold">Total</th>
+              <th className="px-4 py-3 text-center font-semibold">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mockOrders.slice(0, 8).map((order, i) => (
+              <tr key={i} className="border-t border-slate-200 text-slate-700">
+                <td className="px-4 py-3">{order.id}</td>
+                <td className="px-4 py-3">{order.customer}</td>
+                <td className="px-4 py-3">{order.phone}</td>
+                <td className="px-4 py-3">{order.address}</td>
+                <td className="px-4 py-3">
+                  {order.category}, {order.type}, {order.size}, {order.quantity} pcs, {order.method}
+                </td>
+                <td className="px-4 py-3">{order.payment}</td>
+                <td className="px-4 py-3">Rp{order.total.toLocaleString('id-ID')}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-center gap-2">
+                    <button className="w-6 h-6 rounded bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600">
+                      <Eye size={14} />
+                    </button>
+                    <button className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700">
+                      <FileCheck size={14} />
+                    </button>
+                    <button className="w-6 h-6 rounded bg-green-500 text-white flex items-center justify-center hover:bg-green-600">
+                      <FileCheck size={14} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

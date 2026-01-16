@@ -85,45 +85,48 @@ const EditProduk = () => {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <Package className="text-slate-700" size={32} />
-        <h1 className="text-3xl font-bold text-slate-900">Edit Produk</h1>
+    <div className="p-4 sm:p-8">
+      <div className="mb-6">
+        <div className="flex items-center gap-3">
+          <Package className="text-blue-700" size={26} />
+          <h1 className="text-2xl font-bold text-blue-900">Edit Produk</h1>
+        </div>
+        <p className="text-sm text-slate-500 mt-1">Update Produk Anda</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-md p-8">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 max-w-4xl w-full">
         {showSuccessPopup && (
-          <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-6 flex items-center gap-3">
-            <FileCheck className="text-green-600" size={24} />
-            <p className="text-green-800 font-medium">Produk Anda Berhasil Diupdate</p>
+          <div className="bg-green-500 text-white rounded-lg p-3 mb-5 flex items-center gap-2">
+            <FileCheck className="text-white" size={18} />
+            <p className="font-semibold text-sm">Produk Anda Berhasil Diupdate</p>
           </div>
         )}
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div>
-            <label className="block text-slate-700 font-semibold mb-2">Tambah Jenis Bordir</label>
+            <label className="block text-slate-600 font-semibold text-sm mb-2">Tambah Jenis Bordir</label>
             <input
               type="text"
               value={formData.jenisBordir}
               onChange={(e) => setFormData({...formData, jenisBordir: e.target.value})}
-              className={`w-full border ${errors.jenisBordir ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-3`}
+              className={`w-full border ${errors.jenisBordir ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-2.5`}
             />
-            {errors.jenisBordir && <p className="text-red-500 text-sm mt-1">{errors.jenisBordir}</p>}
+            {errors.jenisBordir && <p className="text-red-500 text-xs mt-1">{errors.jenisBordir}</p>}
           </div>
 
           <div>
-            <label className="block text-slate-700 font-semibold mb-2">Tambah Ukuran Bordir</label>
+            <label className="block text-slate-600 font-semibold text-sm mb-2">Tambah Ukuran Bordir</label>
             <input
               type="text"
               value={formData.ukuranBordir}
               onChange={(e) => setFormData({...formData, ukuranBordir: e.target.value})}
-              className={`w-full border ${errors.ukuranBordir ? 'border-red-500' : 'border-slate-300'} rounded-lg px-4 py-3`}
+              className={`w-full border ${errors.ukuranBordir ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-2.5`}
             />
-            {errors.ukuranBordir && <p className="text-red-500 text-sm mt-1">{errors.ukuranBordir}</p>}
+            {errors.ukuranBordir && <p className="text-red-500 text-xs mt-1">{errors.ukuranBordir}</p>}
           </div>
 
           <div>
-            <label className="block text-slate-700 font-semibold mb-2">Tambah Foto Portofolio</label>
-            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center relative">
+            <label className="block text-slate-600 font-semibold text-sm mb-2">Tambah Foto Portofolio</label>
+            <div className="border border-dashed border-slate-300 rounded-xl p-4 sm:p-6 text-center relative">
               {imagePreview ? (
                 <div className="relative">
                   <img 
@@ -144,11 +147,13 @@ const EditProduk = () => {
                 </div>
               ) : (
                 <>
-                  <Download className="mx-auto text-slate-400 mb-3" size={48} />
-                  <p className="text-slate-700 font-medium mb-1">Unggah Gambar Produk</p>
-                  <p className="text-slate-500 text-sm mb-1">PNG, JPG maksimal 5MB</p>
-                  <p className="text-slate-500 text-sm mb-4">Rekomendasi ukuran foto 800x600 pixel (4:3)</p>
-                  <label className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors cursor-pointer inline-block">
+                  <div className="flex items-center justify-center mb-2">
+                    <Download className="text-blue-500" size={36} />
+                  </div>
+                  <p className="text-slate-700 font-semibold text-sm mb-1">Unggah Gambar Produk</p>
+                  <p className="text-slate-500 text-xs mb-1">PNG, JPG maksimal 5MB</p>
+                  <p className="text-slate-500 text-xs mb-3">Rekomendasi ukuran foto 800x600 pixel (4:3)</p>
+                  <label className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer inline-block">
                     Pilih File
                     <input 
                       type="file" 
@@ -163,7 +168,7 @@ const EditProduk = () => {
           </div>
 
           <button 
-            className="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+            className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors"
             onClick={handleSaveChanges}
           >
             Simpan Perubahan

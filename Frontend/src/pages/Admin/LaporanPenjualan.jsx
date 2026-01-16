@@ -186,61 +186,78 @@ const BerandaPage = () => {
 // Laporan Penjualan Component
 const LaporanPage = () => {
   return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <FileText className="text-slate-700" size={32} />
-        <h1 className="text-3xl font-bold text-slate-900">Laporan Penjualan</h1>
+    <div className="p-4 sm:p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <FileText className="text-blue-800" size={26} />
+        <h1 className="text-2xl font-bold text-blue-900">Laporan Penjualan</h1>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-        <div className="flex gap-4 mb-6">
-          <select className="border border-slate-300 rounded-lg px-4 py-2">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 mb-6 inline-flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <select className="border border-slate-300 rounded-lg px-4 py-2 text-sm w-full sm:w-auto">
             <option>Desember</option>
           </select>
-          <select className="border border-slate-300 rounded-lg px-4 py-2">
+          <select className="border border-slate-300 rounded-lg px-4 py-2 text-sm w-full sm:w-auto">
             <option>2025</option>
           </select>
-          <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-            Terapkan
-          </button>
         </div>
+        <button className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors w-full sm:w-auto">
+          Terapkan
+        </button>
+      </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-8">
-          <div className="bg-blue-50 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <ShoppingCart className="text-blue-600" size={32} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+        <div className="bg-blue-50 rounded-xl border border-blue-100 p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="text-blue-600">
+              <ShoppingCart size={36} />
             </div>
-            <p className="text-sm text-blue-600 mb-1">Total Transaksi</p>
-            <p className="text-4xl font-bold text-blue-900">257 <span className="text-lg">Transaksi</span></p>
-          </div>
-
-          <div className="bg-blue-50 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <Package className="text-blue-600" size={32} />
+            <div>
+              <p className="text-xs text-blue-700">Total Transaksi</p>
+              <p className="text-xl font-bold text-blue-900">257 <span className="text-xs font-semibold">Transaksi</span></p>
             </div>
-            <p className="text-sm text-blue-600 mb-1">Produk Terjual</p>
-            <p className="text-4xl font-bold text-blue-900">500 <span className="text-lg">Produk</span></p>
-          </div>
-
-          <div className="bg-blue-50 rounded-xl p-6">
-            <p className="text-sm text-blue-600 mb-1">Total Pendapatan</p>
-            <p className="text-3xl font-bold text-blue-900">Rp100.000.000,-</p>
           </div>
         </div>
 
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-slate-900">Grafik Penjualan</h3>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-amber-500 rounded"></div>
-              <span className="text-sm text-slate-600">Jumlah Penjualan</span>
+        <div className="bg-blue-50 rounded-xl border border-blue-100 p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="text-blue-600">
+              <Package size={36} />
+            </div>
+            <div>
+              <p className="text-xs text-blue-700">Produk Terjual</p>
+              <p className="text-xl font-bold text-blue-900">500 <span className="text-xs font-semibold">Produk</span></p>
             </div>
           </div>
-          <div className="flex items-end justify-around h-48 gap-2">
+        </div>
+
+        <div className="bg-blue-50 rounded-xl border border-blue-100 p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="text-blue-600">
+              <DollarSign size={36} />
+            </div>
+            <div>
+              <p className="text-xs text-blue-700">Total Pendapatan</p>
+              <p className="text-lg font-bold text-blue-900">Rp100.000.000,-</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-blue-900">Grafik Penjualan</h3>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-amber-500 rounded-sm"></div>
+            <span className="text-xs text-slate-600">Jumlah Penjualan</span>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <div className="flex items-end justify-around h-48 gap-2 min-w-[520px]">
             {mockSalesData.map((data, i) => (
               <div key={i} className="flex flex-col items-center flex-1">
                 <div 
-                  className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t-lg"
+                  className="w-full bg-amber-500 rounded-t-md"
                   style={{ height: `${(data.sales / 75) * 100}%` }}
                 />
               </div>
@@ -249,38 +266,38 @@ const LaporanPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-md p-6">
-        <h3 className="text-xl font-bold text-slate-900 mb-6">Ringkasan Penjualan</h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-semibold text-slate-700 mb-3">Produk Terlaris</h4>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
+        <h3 className="text-lg font-bold text-blue-900 mb-4">Ringkasan Penjualan</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="border border-slate-200 rounded-lg p-4">
+            <h4 className="font-semibold text-slate-700 text-sm mb-3">Produk Terlaris</h4>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs text-slate-700">
                 <span>1. Bordir Seragam</span>
                 <span className="font-semibold">58 Transaksi</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs text-slate-700">
                 <span>2. Bordir Emblem</span>
                 <span className="font-semibold">45 Transaksi</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs text-slate-700">
                 <span>3. Bordir Topi</span>
                 <span className="font-semibold">23 Transaksi</span>
               </div>
             </div>
           </div>
-          <div>
-            <h4 className="font-semibold text-slate-700 mb-3">Jenis Bordir Terlaris</h4>
+          <div className="border border-slate-200 rounded-lg p-4">
+            <h4 className="font-semibold text-slate-700 text-sm mb-3">Jenis Bordir Terlaris</h4>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs text-slate-700">
                 <span>1. Bordir Biasa</span>
                 <span className="font-semibold">40 Transaksi</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs text-slate-700">
                 <span>2. Bordir 3D</span>
                 <span className="font-semibold">30 Transaksi</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs text-slate-700">
                 <span>3. Bordir 5 Warna</span>
                 <span className="font-semibold">23 Transaksi</span>
               </div>

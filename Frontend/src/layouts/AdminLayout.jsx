@@ -14,6 +14,7 @@ import {
 const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Determine active menu based on current path
   const getActiveMenu = () => {
@@ -41,21 +42,54 @@ const AdminLayout = () => {
   ];
 
   const handleLogout = () => {
-    // Add logout logic here
-    console.log('Logging out...');
+    navigate('/login');
   };
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-slate-900 min-h-screen p-4 flex flex-col">
-        <div className="mb-8">
-          <h1 className="text-white text-3xl font-bold">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+      {/* Mobile top bar */}
+      <div className="md:hidden flex items-center justify-between bg-slate-900 px-4 py-3">
+        <div>
+          <h1 className="text-white text-2xl font-bold">
             JA<span className="text-red-500">.</span>
           </h1>
-          <p className="text-white text-xl">Bordir</p>
+          <p className="text-white text-sm">Bordir</p>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsSidebarOpen(true)}
+          className="text-white px-3 py-2 rounded-md border border-slate-700 hover:bg-slate-800"
+        >
+          Menu
+        </button>
+      </div>
 
+      {/* Mobile overlay */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setIsSidebarOpen(false)} />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`fixed z-50 inset-y-0 left-0 w-64 bg-slate-900 p-4 flex flex-col transform transition-transform md:static md:translate-x-0 md:w-64 ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between md:block">
+          <div className="mb-8">
+            <h1 className="text-white text-3xl font-bold">
+              JA<span className="text-red-500">.</span>
+            </h1>
+            <p className="text-white text-xl">Bordir</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden text-white px-3 py-2 rounded-md border border-slate-700 hover:bg-slate-800"
+          >
+            Tutup
+          </button>
+        </div>
         <nav className="flex-1 space-y-2">
           {menuItems.map(item => (
             <button
@@ -63,6 +97,7 @@ const AdminLayout = () => {
               onClick={() => {
                 setActiveMenu(item.id);
                 navigate(item.path);
+                setIsSidebarOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 activeMenu === item.id
@@ -86,7 +121,7 @@ const AdminLayout = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <Outlet />
       </div>
     </div>
