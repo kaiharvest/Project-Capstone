@@ -489,9 +489,10 @@ const KelolaUserPage = () => {
       try {
         const response = await api.get('/admin/users');
         const items = response.data.data || [];
+        const filtered = items.filter((user) => user.role !== 'admin');
         if (!isMounted) return;
-        setUsers(items);
-        setTotalUsers(response.data.total ?? items.length);
+        setUsers(filtered);
+        setTotalUsers(filtered.length);
       } catch (error) {
         console.error('Gagal memuat user:', error);
       } finally {

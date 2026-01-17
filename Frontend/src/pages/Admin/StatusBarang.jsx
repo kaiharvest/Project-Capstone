@@ -19,9 +19,9 @@ import {
 import api from '../../services/api';
 
 const STATUS_OPTIONS = [
-  { label: 'Proses', value: 'processing' },
-  { label: 'Finishing', value: 'confirmed' },
-  { label: 'Selesai', value: 'completed' }
+  { label: 'Proses', value: 'pending' },
+  { label: 'Finishing', value: 'processing' },
+  { label: 'Selesai', value: 'confirmed' }
 ];
 
 // Sidebar Component
@@ -321,6 +321,34 @@ const StatusBarangPage = () => {
     }
   };
 
+  const handleOpenProof = async (orderId) => {
+    if (!orderId) return;
+    try {
+      const response = await api.get(`/admin/orders/${orderId}/proof`, {
+        responseType: 'blob'
+      });
+      const fileUrl = URL.createObjectURL(response.data);
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Gagal membuka bukti pembayaran:', error);
+      alert('Bukti pembayaran belum tersedia.');
+    }
+  };
+
+  const handleOpenDesign = async (orderId) => {
+    if (!orderId) return;
+    try {
+      const response = await api.get(`/admin/orders/${orderId}/design-image`, {
+        responseType: 'blob'
+      });
+      const fileUrl = URL.createObjectURL(response.data);
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Gagal membuka desain bordir:', error);
+      alert('File desain belum tersedia.');
+    }
+  };
+
   const formatOrderDetail = (order) => {
     const parts = [
       order.service_type,
@@ -359,10 +387,16 @@ const StatusBarangPage = () => {
                 Rp{Number(order.total_price || 0).toLocaleString('id-ID')}
               </div>
               <div className="flex items-start justify-end gap-2">
-                <button className="w-6 h-6 rounded bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600">
+                <button
+                  className="w-6 h-6 rounded bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600"
+                  onClick={() => handleOpenProof(order.id)}
+                >
                   <Eye size={14} />
                 </button>
-                <button className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700">
+                <button
+                  className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700"
+                  onClick={() => handleOpenDesign(order.id)}
+                >
                   <FileCheck size={14} />
                 </button>
               </div>

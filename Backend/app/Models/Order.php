@@ -25,6 +25,7 @@ class Order extends Model
         'shipping_address',
         'total_price',
         'status',
+        'estimated_completion_date',
         'order_type',
         'notes',
         'proof_image', // untuk bukti pembayaran (lama)

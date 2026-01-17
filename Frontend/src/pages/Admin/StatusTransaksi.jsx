@@ -13,6 +13,7 @@ import {
   DollarSign,
   Eye,
   FileCheck,
+  Check,
   Trash2,
   Download
 } from 'lucide-react';
@@ -380,6 +381,20 @@ const StatusTransaksiPage = () => {
     }
   };
 
+  const handleOpenDesign = async (orderId) => {
+    if (!orderId) return;
+    try {
+      const response = await api.get(`/admin/orders/${orderId}/design-image`, {
+        responseType: 'blob'
+      });
+      const fileUrl = URL.createObjectURL(response.data);
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Gagal membuka desain bordir:', error);
+      alert('File desain belum tersedia.');
+    }
+  };
+
   return (
     <div className="p-4 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
@@ -439,16 +454,22 @@ const StatusTransaksiPage = () => {
                       </button>
                       <button
                         className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700"
-                        onClick={() => handleUpdateStatus(transaction.id, 'paid')}
+                        onClick={() => handleOpenDesign(order?.id)}
                       >
                         <FileCheck size={14} />
                       </button>
-                      <button
-                        className="w-6 h-6 rounded bg-green-500 text-white flex items-center justify-center hover:bg-green-600"
-                        onClick={() => handleUpdateStatus(transaction.id, 'failed')}
-                      >
-                        <FileCheck size={14} />
-                      </button>
+                      {transaction.status === 'paid' ? (
+                        <div className="w-6 h-6 rounded bg-green-500 text-white flex items-center justify-center">
+                          <Check size={14} />
+                        </div>
+                      ) : (
+                        <button
+                          className="w-6 h-6 rounded bg-green-500 text-white flex items-center justify-center hover:bg-green-600"
+                          onClick={() => handleUpdateStatus(transaction.id, 'paid')}
+                        >
+                          <Check size={14} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

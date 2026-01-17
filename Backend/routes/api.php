@@ -78,6 +78,7 @@ Route::post('orders/{id}/price', [AdminOrderController::class,'updateTotalPrice'
 Route::post('orders/{id}/estimate', [AdminOrderController::class,'updateEstimatedCompletion']);
 Route::post('orders/{id}/proof', [AdminOrderController::class,'uploadProof']);
 Route::get('orders/{id}/proof', [AdminOrderController::class,'showProof']);
+Route::get('orders/{id}/design-image', [AdminOrderController::class,'showDesignImage']);
 
 
 Route::get('transactions', [TransactionController::class,'index']);
@@ -88,4 +89,3 @@ Route::post('transactions/{id}/status', [TransactionController::class,'updateSta
 Route::get('reports/finance', [ReportController::class,'finance']);
 });
     
-

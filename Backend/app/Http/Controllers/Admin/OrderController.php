@@ -58,7 +58,7 @@ class OrderController extends Controller
         $order = Order::findOrFail($id);
 
         $data = $request->validate([
-            'status' => 'required|in:pending,processing,confirmed,cancelled,completed'
+            'status' => 'required|in:pending,processing,confirmed,cancelled,cart'
         ]);
 
         $order->update(['status' => $data['status']]);
@@ -158,6 +158,30 @@ class OrderController extends Controller
         if (!file_exists($path)) {
             return response()->json([
                 'message' => 'File bukti pemesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->download($path);
+    }
+
+    /**
+     * Menampilkan gambar desain bordir
+     */
+    public function showDesignImage($id)
+    {
+        $order = Order::findOrFail($id);
+
+        if (!$order->design_image_path) {
+            return response()->json([
+                'message' => 'Gambar desain bordir tidak ditemukan.',
+            ], 404);
+        }
+
+        $path = storage_path('app/public/designs/' . $order->design_image_path);
+
+        if (!file_exists($path)) {
+            return response()->json([
+                'message' => 'File gambar desain bordir tidak ditemukan.',
             ], 404);
         }
 
