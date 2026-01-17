@@ -13,7 +13,7 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Order::with('user'); // Include user information
+        $query = Order::with(['user', 'transaction']); // Include user and transaction information
 
         // Filter by status if provided
         if ($request->filled('status')) {

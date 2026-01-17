@@ -16,55 +16,13 @@ import {
   Trash2,
   Download
 } from 'lucide-react';
+import api from '../../services/api';
 
-// Mock data - nanti ganti dengan axios call ke Laravel backend
-const mockStats = {
-  totalTransactions: 67,
-  totalProducts: 500,
-  totalRevenue: 200000000,
-  totalUsers: 257
-};
-
-const mockSalesData = [
-  { month: 'Jan', sales: 45 },
-  { month: 'Feb', sales: 35 },
-  { month: 'Mar', sales: 60 },
-  { month: 'Apr', sales: 50 },
-  { month: 'Mei', sales: 40 },
-  { month: 'Jun', sales: 65 },
-  { month: 'Jul', sales: 55 },
-  { month: 'Agu', sales: 45 },
-  { month: 'Sep', sales: 70 },
-  { month: 'Okt', sales: 60 },
-  { month: 'Nov', sales: 50 },
-  { month: 'Des', sales: 75 }
+const STATUS_OPTIONS = [
+  { label: 'Proses', value: 'processing' },
+  { label: 'Finishing', value: 'confirmed' },
+  { label: 'Selesai', value: 'completed' }
 ];
-
-const mockOrders = [
-  {
-    id: 'INV2025171212345',
-    customer: 'Budi Pertiwi',
-    address: 'RT 01/03, Kedungmundu, Tembalang, Semarang',
-    phone: '081234567890',
-    category: 'Bordir Topi',
-    type: 'Bordir 3D',
-    size: '20-24CM',
-    quantity: 20,
-    method: 'Pickup',
-    payment: 'Transfer BCA',
-    total: 1000000,
-    status: 'Proses'
-  }
-];
-
-const mockUsers = Array(15).fill(null).map((_, i) => ({
-  id: i + 1,
-  username: 'userjabordir',
-  name: 'Nama User',
-  email: 'emailuser@gmail.com',
-  phone: '081234567890',
-  password: 'Password*5'
-}));
 
 // Sidebar Component
 const Sidebar = ({ activeMenu, setActiveMenu }) => {
@@ -294,6 +252,86 @@ const LaporanPage = () => {
 
 // Status Barang Component
 const StatusBarangPage = () => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [estimateInputs, setEstimateInputs] = useState({});
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchOrders = async () => {
+      try {
+        const response = await api.get('/admin/orders');
+        const items = response.data.data || [];
+        if (!isMounted) return;
+        setOrders(items);
+        const nextEstimates = {};
+        items.forEach((order) => {
+          if (order.estimated_completion_date) {
+            nextEstimates[order.id] = order.estimated_completion_date;
+          }
+        });
+        setEstimateInputs(nextEstimates);
+      } catch (error) {
+        console.error('Gagal memuat status barang:', error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchOrders();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleStatusChange = async (orderId, status) => {
+    try {
+      await api.post(`/admin/orders/${orderId}/status`, { status });
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, status } : order
+        )
+      );
+    } catch (error) {
+      console.error('Gagal update status pesanan:', error);
+      alert('Gagal update status pesanan.');
+    }
+  };
+
+  const handleEstimateSave = async (orderId) => {
+    const dateValue = estimateInputs[orderId];
+    if (!dateValue) {
+      alert('Tanggal estimasi belum diisi.');
+      return;
+    }
+    try {
+      await api.post(`/admin/orders/${orderId}/estimate`, {
+        estimated_completion_date: dateValue
+      });
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId
+            ? { ...order, estimated_completion_date: dateValue }
+            : order
+        )
+      );
+    } catch (error) {
+      console.error('Gagal update estimasi selesai:', error);
+      alert('Gagal update estimasi selesai.');
+    }
+  };
+
+  const formatOrderDetail = (order) => {
+    const parts = [
+      order.service_type,
+      order.embroidery_type,
+      order.size_cm ? `${order.size_cm} cm` : null,
+      order.quantity ? `${order.quantity} pcs` : null,
+      order.shipping_method
+    ];
+    return parts.filter(Boolean).join(', ');
+  };
+
   return (
     <div className="p-4 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
@@ -302,18 +340,24 @@ const StatusBarangPage = () => {
       </div>
 
       <div className="space-y-6">
-        {mockOrders.map((order, i) => (
-          <div key={i} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5">
+        {loading && (
+          <div className="text-sm text-slate-500">Memuat data...</div>
+        )}
+        {!loading && orders.length === 0 && (
+          <div className="text-sm text-slate-500">Belum ada pesanan.</div>
+        )}
+        {orders.map((order) => (
+          <div key={order.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5">
             <div className="grid grid-cols-1 md:grid-cols-8 gap-3 md:gap-4 text-xs text-slate-700 mb-4">
-              <div>{order.id}</div>
-              <div>{order.customer}</div>
-              <div>{order.phone}</div>
-              <div>{order.address}</div>
+              <div>{order.order_number || `#${order.id}`}</div>
+              <div>{order.user?.name || '-'}</div>
+              <div>{order.user?.no_telpon || '-'}</div>
+              <div>{order.shipping_address || order.user?.alamat || '-'}</div>
+              <div>{formatOrderDetail(order) || '-'}</div>
+              <div>{order.transaction?.payment_method || '-'}</div>
               <div>
-                {order.category}, {order.type}, {order.size}, {order.quantity} pcs, {order.method}
+                Rp{Number(order.total_price || 0).toLocaleString('id-ID')}
               </div>
-              <div>{order.payment}</div>
-              <div>Rp{order.total.toLocaleString('id-ID')}</div>
               <div className="flex items-start justify-end gap-2">
                 <button className="w-6 h-6 rounded bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600">
                   <Eye size={14} />
@@ -328,15 +372,22 @@ const StatusBarangPage = () => {
               <div className="border border-slate-200 rounded-lg px-3 py-2 flex items-center gap-3">
                 <span className="text-xs font-semibold text-slate-600">Status</span>
                 <div className="flex gap-2 flex-1">
-                  <button className="flex-1 bg-amber-400 text-white text-xs font-semibold py-1.5 rounded-md hover:bg-amber-500">
-                    Proses
-                  </button>
-                  <button className="flex-1 bg-slate-200 text-slate-500 text-xs font-semibold py-1.5 rounded-md hover:bg-slate-300">
-                    Finishing
-                  </button>
-                  <button className="flex-1 bg-slate-200 text-slate-500 text-xs font-semibold py-1.5 rounded-md hover:bg-slate-300">
-                    Selesai
-                  </button>
+                  {STATUS_OPTIONS.map((option) => {
+                    const isActive = order.status === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        onClick={() => handleStatusChange(order.id, option.value)}
+                        className={`flex-1 text-xs font-semibold py-1.5 rounded-md ${
+                          isActive
+                            ? 'bg-amber-400 text-white hover:bg-amber-500'
+                            : 'bg-slate-200 text-slate-500 hover:bg-slate-300'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -346,9 +397,18 @@ const StatusBarangPage = () => {
                   <input
                     type="date"
                     className="border border-slate-300 rounded-md px-3 py-1.5 text-xs flex-1"
-                    defaultValue="2025-12-25"
+                    value={estimateInputs[order.id] || ''}
+                    onChange={(event) =>
+                      setEstimateInputs((prev) => ({
+                        ...prev,
+                        [order.id]: event.target.value
+                      }))
+                    }
                   />
-                  <button className="bg-blue-600 text-white px-4 py-1.5 rounded-md text-xs font-semibold hover:bg-blue-700">
+                  <button
+                    onClick={() => handleEstimateSave(order.id)}
+                    className="bg-blue-600 text-white px-4 py-1.5 rounded-md text-xs font-semibold hover:bg-blue-700"
+                  >
                     Simpan
                   </button>
                 </div>

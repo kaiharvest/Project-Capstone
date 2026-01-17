@@ -63,16 +63,27 @@ class Order extends Model
      */
     public static function generateUniqueOrderNumber()
     {
-        $prefix = 'ORD';
-        $timestamp = now()->format('Ymd');
-        $random = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+        $datePart = now()->format('Ymd');
+        $prefix = $datePart . 'REG';
+        $sequenceLength = 4;
 
-        $orderNumber = $prefix . $timestamp . $random;
+        $latestOrder = self::where('order_number', 'like', $prefix . '%')
+            ->orderBy('order_number', 'desc')
+            ->first();
 
-        // Ensure uniqueness
+        $nextNumber = 1;
+        if ($latestOrder) {
+            $lastSequence = intval(substr($latestOrder->order_number, strlen($prefix)));
+            if ($lastSequence > 0) {
+                $nextNumber = $lastSequence + 1;
+            }
+        }
+
+        $orderNumber = $prefix . str_pad((string) $nextNumber, $sequenceLength, '0', STR_PAD_LEFT);
+
         while (self::where('order_number', $orderNumber)->exists()) {
-            $random = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
-            $orderNumber = $prefix . $timestamp . $random;
+            $nextNumber++;
+            $orderNumber = $prefix . str_pad((string) $nextNumber, $sequenceLength, '0', STR_PAD_LEFT);
         }
 
         return $orderNumber;

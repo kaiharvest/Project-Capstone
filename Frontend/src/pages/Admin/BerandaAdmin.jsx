@@ -1,30 +1,61 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Users, Box, ShoppingCart, DollarSign } from "lucide-react";
-
-// Mock data - nanti ganti dengan axios call ke Laravel backend
-const mockStats = {
-  totalTransactions: 67,
-  totalProducts: 500,
-  totalRevenue: 200000000,
-  totalUsers: 257,
-};
-
-const mockSalesData = [
-  { month: "Jan", sales: 45 },
-  { month: "Feb", sales: 35 },
-  { month: "Mar", sales: 60 },
-  { month: "Apr", sales: 50 },
-  { month: "Mei", sales: 40 },
-  { month: "Jun", sales: 65 },
-  { month: "Jul", sales: 55 },
-  { month: "Agu", sales: 45 },
-  { month: "Sep", sales: 70 },
-  { month: "Okt", sales: 60 },
-  { month: "Nov", sales: 50 },
-  { month: "Des", sales: 75 },
-];
+import api from "../../services/api";
 
 const BerandaAdmin = () => {
+  const [stats, setStats] = useState({
+    users_count: 0,
+    transactions_count: 0,
+    revenue_total: 0,
+    categories: [],
+    sales_chart: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDashboard = async () => {
+      try {
+        const response = await api.get("/admin/dashboard");
+        if (!isMounted) return;
+        setStats({
+          users_count: response.data.users_count ?? 0,
+          transactions_count: response.data.transactions_count ?? 0,
+          revenue_total: response.data.revenue_total ?? 0,
+          categories: response.data.categories ?? [],
+          sales_chart: response.data.sales_chart ?? [],
+        });
+      } catch (error) {
+        console.error("Gagal memuat dashboard admin:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const chartData = useMemo(() => {
+    return (stats.sales_chart || []).map((item) => {
+      const date = new Date(item.date);
+      const label = date.toLocaleDateString("id-ID", {
+        month: "short",
+        day: "2-digit",
+      });
+      return {
+        label,
+        total: Number(item.total) || 0,
+      };
+    });
+  }, [stats.sales_chart]);
+
+  const maxChartValue = useMemo(() => {
+    return chartData.reduce((max, item) => Math.max(max, item.total), 0) || 1;
+  }, [chartData]);
+
   return (
     <div className="p-4 sm:p-8">
       <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-6 sm:mb-8">
@@ -40,7 +71,7 @@ const BerandaAdmin = () => {
             <p className="text-sm text-blue-600">Pengguna Terdaftar</p>
           </div>
           <p className="text-4xl font-bold text-blue-900">
-            {mockStats.totalUsers}
+            {loading ? "..." : stats.users_count}
           </p>
         </div>
 
@@ -51,7 +82,9 @@ const BerandaAdmin = () => {
             </div>
             <p className="text-sm text-cyan-600">Kategori Bordir</p>
           </div>
-          <p className="text-4xl font-bold text-cyan-900">5</p>
+          <p className="text-4xl font-bold text-cyan-900">
+            {loading ? "..." : stats.categories.length}
+          </p>
         </div>
 
         <div className="bg-gradient-to-br from-sky-50 to-sky-100 rounded-2xl p-6 shadow-sm">
@@ -62,7 +95,7 @@ const BerandaAdmin = () => {
             <p className="text-sm text-sky-600">Total Transaksi</p>
           </div>
           <p className="text-4xl font-bold text-sky-900">
-            {mockStats.totalTransactions}
+            {loading ? "..." : stats.transactions_count}
           </p>
         </div>
 
@@ -74,7 +107,7 @@ const BerandaAdmin = () => {
             <p className="text-sm text-blue-600">Pemasukan Total (Rp)</p>
           </div>
           <p className="text-3xl font-bold text-blue-900">
-            {mockStats.totalRevenue.toLocaleString("id-ID")}
+            {(stats.revenue_total || 0).toLocaleString("id-ID")}
           </p>
         </div>
       </div>
@@ -89,15 +122,19 @@ const BerandaAdmin = () => {
           </select>
         </div>
         <div className="flex items-end justify-around h-48 sm:h-64 gap-2">
-          {mockSalesData.map((data, i) => (
-            <div key={i} className="flex flex-col items-center flex-1">
+          {chartData.length === 0 && !loading ? (
+            <div className="text-sm text-slate-500">Belum ada data.</div>
+          ) : (
+            chartData.map((data, i) => (
+              <div key={i} className="flex flex-col items-center flex-1">
               <div
                 className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t-lg transition-all hover:from-amber-500 hover:to-amber-600"
-                style={{ height: `${(data.sales / 75) * 100}%` }}
+                style={{ height: `${(data.total / maxChartValue) * 100}%` }}
               />
-              <p className="text-xs text-slate-600 mt-2">{data.month}</p>
+              <p className="text-xs text-slate-600 mt-2">{data.label}</p>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

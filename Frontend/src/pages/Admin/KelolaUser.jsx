@@ -16,6 +16,7 @@ import {
   Trash2,
   Download
 } from 'lucide-react';
+import api from '../../services/api';
 
 // Mock data - nanti ganti dengan axios call ke Laravel backend
 const mockStats = {
@@ -478,6 +479,44 @@ const EditProdukPage = () => {
 
 // Kelola User Component
 const KelolaUserPage = () => {
+  const [users, setUsers] = useState([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUsers = async () => {
+      try {
+        const response = await api.get('/admin/users');
+        const items = response.data.data || [];
+        if (!isMounted) return;
+        setUsers(items);
+        setTotalUsers(response.data.total ?? items.length);
+      } catch (error) {
+        console.error('Gagal memuat user:', error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchUsers();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleDelete = async (userId) => {
+    if (!window.confirm('Yakin hapus user ini?')) return;
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      setUsers((prev) => prev.filter((user) => user.id !== userId));
+      setTotalUsers((prev) => Math.max(prev - 1, 0));
+    } catch (error) {
+      console.error('Gagal hapus user:', error);
+      alert('Gagal menghapus user.');
+    }
+  };
+
   return (
     <div className="p-4 sm:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
@@ -486,7 +525,7 @@ const KelolaUserPage = () => {
           <h1 className="text-2xl font-bold text-blue-900">Data User</h1>
         </div>
         <button className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-sm hover:bg-blue-700 transition-colors">
-          257 Pengguna Terdaftar
+          {loading ? 'Memuat...' : `${totalUsers} Pengguna Terdaftar`}
         </button>
       </div>
 
@@ -503,15 +542,28 @@ const KelolaUserPage = () => {
             </tr>
           </thead>
           <tbody>
-            {mockUsers.map((user) => (
+            {loading && (
+              <tr className="border-b border-blue-200 text-blue-700">
+                <td className="px-4 py-2" colSpan={6}>Memuat data...</td>
+              </tr>
+            )}
+            {!loading && users.length === 0 && (
+              <tr className="border-b border-blue-200 text-blue-700">
+                <td className="px-4 py-2" colSpan={6}>Belum ada user.</td>
+              </tr>
+            )}
+            {users.map((user) => (
               <tr key={user.id} className="border-b border-blue-200 text-blue-700">
-                <td className="px-4 py-2">{user.username}</td>
-                <td className="px-4 py-2">{user.name}</td>
-                <td className="px-4 py-2">{user.email}</td>
-                <td className="px-4 py-2">{user.phone}</td>
-                <td className="px-4 py-2">{user.alamat}</td>
+                <td className="px-4 py-2">{user.email ? user.email.split('@')[0] : (user.name || '-')}</td>
+                <td className="px-4 py-2">{user.name || '-'}</td>
+                <td className="px-4 py-2">{user.email || '-'}</td>
+                <td className="px-4 py-2">{user.no_telpon || '-'}</td>
+                <td className="px-4 py-2">{user.alamat || '-'}</td>
                 <td className="px-4 py-2 text-center">
-                  <button className="text-red-500 hover:text-red-600">
+                  <button
+                    className="text-red-500 hover:text-red-600"
+                    onClick={() => handleDelete(user.id)}
+                  >
                     <Trash2 size={18} />
                   </button>
                 </td>

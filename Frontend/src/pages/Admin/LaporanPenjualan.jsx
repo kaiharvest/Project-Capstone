@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -16,55 +16,22 @@ import {
   Trash2,
   Download
 } from 'lucide-react';
+import api from '../../services/api';
 
-// Mock data - nanti ganti dengan axios call ke Laravel backend
-const mockStats = {
-  totalTransactions: 67,
-  totalProducts: 500,
-  totalRevenue: 200000000,
-  totalUsers: 257
-};
-
-const mockSalesData = [
-  { month: 'Jan', sales: 45 },
-  { month: 'Feb', sales: 35 },
-  { month: 'Mar', sales: 60 },
-  { month: 'Apr', sales: 50 },
-  { month: 'Mei', sales: 40 },
-  { month: 'Jun', sales: 65 },
-  { month: 'Jul', sales: 55 },
-  { month: 'Agu', sales: 45 },
-  { month: 'Sep', sales: 70 },
-  { month: 'Okt', sales: 60 },
-  { month: 'Nov', sales: 50 },
-  { month: 'Des', sales: 75 }
+const MONTHS = [
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember'
 ];
-
-const mockOrders = [
-  {
-    id: 'INV2025171212345',
-    customer: 'Budi Pertiwi',
-    address: 'RT 01/03, Kedungmundu, Tembalang, Semarang',
-    phone: '081234567890',
-    category: 'Bordir Topi',
-    type: 'Bordir 3D',
-    size: '20-24CM',
-    quantity: 20,
-    method: 'Pickup',
-    payment: 'Transfer BCA',
-    total: 1000000,
-    status: 'Proses'
-  }
-];
-
-const mockUsers = Array(15).fill(null).map((_, i) => ({
-  id: i + 1,
-  username: 'userjabordir',
-  name: 'Nama User',
-  email: 'emailuser@gmail.com',
-  phone: '081234567890',
-  password: 'Password*5'
-}));
 
 // Sidebar Component
 const Sidebar = ({ activeMenu, setActiveMenu }) => {
@@ -185,6 +152,65 @@ const BerandaPage = () => {
 
 // Laporan Penjualan Component
 const LaporanPage = () => {
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [report, setReport] = useState({
+    total_transactions: 0,
+    products_sold: 0,
+    total_revenue: 0,
+    sales_chart: [],
+    summary: {
+      top_products: [],
+      top_embroidery_types: []
+    }
+  });
+  const [loading, setLoading] = useState(true);
+
+  const periodDays = useMemo(() => {
+    return new Date(selectedYear, selectedMonth + 1, 0).getDate();
+  }, [selectedMonth, selectedYear]);
+
+  const fetchReport = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/admin/reports/sales', {
+        params: { period: periodDays }
+      });
+      setReport({
+        total_transactions: response.data.total_transactions ?? 0,
+        products_sold: response.data.products_sold ?? 0,
+        total_revenue: response.data.total_revenue ?? 0,
+        sales_chart: response.data.sales_chart ?? [],
+        summary: response.data.summary ?? { top_products: [], top_embroidery_types: [] }
+      });
+    } catch (error) {
+      console.error('Gagal memuat laporan penjualan:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const chartData = useMemo(() => {
+    return (report.sales_chart || []).map((item) => {
+      const date = new Date(item.date);
+      const label = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+      return {
+        label,
+        total: Number(item.total) || 0
+      };
+    });
+  }, [report.sales_chart]);
+
+  const maxChartValue = useMemo(() => {
+    return chartData.reduce((max, item) => Math.max(max, item.total), 0) || 1;
+  }, [chartData]);
+
   return (
     <div className="p-4 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
@@ -194,14 +220,29 @@ const LaporanPage = () => {
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 mb-6 inline-flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <select className="border border-slate-300 rounded-lg px-4 py-2 text-sm w-full sm:w-auto">
-            <option>Desember</option>
+          <select
+            className="border border-slate-300 rounded-lg px-4 py-2 text-sm w-full sm:w-auto"
+            value={selectedMonth}
+            onChange={(event) => setSelectedMonth(Number(event.target.value))}
+          >
+            {MONTHS.map((month, index) => (
+              <option key={month} value={index}>{month}</option>
+            ))}
           </select>
-          <select className="border border-slate-300 rounded-lg px-4 py-2 text-sm w-full sm:w-auto">
-            <option>2025</option>
+          <select
+            className="border border-slate-300 rounded-lg px-4 py-2 text-sm w-full sm:w-auto"
+            value={selectedYear}
+            onChange={(event) => setSelectedYear(Number(event.target.value))}
+          >
+            {[selectedYear - 1, selectedYear, selectedYear + 1].map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
           </select>
         </div>
-        <button className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors w-full sm:w-auto">
+        <button
+          className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors w-full sm:w-auto"
+          onClick={fetchReport}
+        >
           Terapkan
         </button>
       </div>
@@ -214,7 +255,10 @@ const LaporanPage = () => {
             </div>
             <div>
               <p className="text-xs text-blue-700">Total Transaksi</p>
-              <p className="text-xl font-bold text-blue-900">257 <span className="text-xs font-semibold">Transaksi</span></p>
+              <p className="text-xl font-bold text-blue-900">
+                {loading ? '...' : report.total_transactions}{' '}
+                <span className="text-xs font-semibold">Transaksi</span>
+              </p>
             </div>
           </div>
         </div>
@@ -226,7 +270,10 @@ const LaporanPage = () => {
             </div>
             <div>
               <p className="text-xs text-blue-700">Produk Terjual</p>
-              <p className="text-xl font-bold text-blue-900">500 <span className="text-xs font-semibold">Produk</span></p>
+              <p className="text-xl font-bold text-blue-900">
+                {loading ? '...' : report.products_sold}{' '}
+                <span className="text-xs font-semibold">Produk</span>
+              </p>
             </div>
           </div>
         </div>
@@ -238,7 +285,9 @@ const LaporanPage = () => {
             </div>
             <div>
               <p className="text-xs text-blue-700">Total Pendapatan</p>
-              <p className="text-lg font-bold text-blue-900">Rp100.000.000,-</p>
+              <p className="text-lg font-bold text-blue-900">
+                Rp{Number(report.total_revenue || 0).toLocaleString('id-ID')}
+              </p>
             </div>
           </div>
         </div>
@@ -254,14 +303,18 @@ const LaporanPage = () => {
         </div>
         <div className="overflow-x-auto">
           <div className="flex items-end justify-around h-48 gap-2 min-w-[520px]">
-            {mockSalesData.map((data, i) => (
-              <div key={i} className="flex flex-col items-center flex-1">
-                <div 
-                  className="w-full bg-amber-500 rounded-t-md"
-                  style={{ height: `${(data.sales / 75) * 100}%` }}
-                />
-              </div>
-            ))}
+            {chartData.length === 0 && !loading ? (
+              <div className="text-sm text-slate-500">Belum ada data.</div>
+            ) : (
+              chartData.map((data) => (
+                <div key={data.label} className="flex flex-col items-center flex-1">
+                  <div 
+                    className="w-full bg-amber-500 rounded-t-md"
+                    style={{ height: `${(data.total / maxChartValue) * 100}%` }}
+                  />
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -272,35 +325,31 @@ const LaporanPage = () => {
           <div className="border border-slate-200 rounded-lg p-4">
             <h4 className="font-semibold text-slate-700 text-sm mb-3">Produk Terlaris</h4>
             <div className="space-y-2">
-              <div className="flex justify-between text-xs text-slate-700">
-                <span>1. Bordir Seragam</span>
-                <span className="font-semibold">58 Transaksi</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-700">
-                <span>2. Bordir Emblem</span>
-                <span className="font-semibold">45 Transaksi</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-700">
-                <span>3. Bordir Topi</span>
-                <span className="font-semibold">23 Transaksi</span>
-              </div>
+              {report.summary.top_products.length === 0 ? (
+                <p className="text-xs text-slate-500">Belum ada data.</p>
+              ) : (
+                report.summary.top_products.map((item, index) => (
+                  <div key={item.id || index} className="flex justify-between text-xs text-slate-700">
+                    <span>{index + 1}. {item.name || '-'}</span>
+                    <span className="font-semibold">{item.qty} Transaksi</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
           <div className="border border-slate-200 rounded-lg p-4">
             <h4 className="font-semibold text-slate-700 text-sm mb-3">Jenis Bordir Terlaris</h4>
             <div className="space-y-2">
-              <div className="flex justify-between text-xs text-slate-700">
-                <span>1. Bordir Biasa</span>
-                <span className="font-semibold">40 Transaksi</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-700">
-                <span>2. Bordir 3D</span>
-                <span className="font-semibold">30 Transaksi</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-700">
-                <span>3. Bordir 5 Warna</span>
-                <span className="font-semibold">23 Transaksi</span>
-              </div>
+              {report.summary.top_embroidery_types.length === 0 ? (
+                <p className="text-xs text-slate-500">Belum ada data.</p>
+              ) : (
+                report.summary.top_embroidery_types.map((item, index) => (
+                  <div key={item.embroidery_type || index} className="flex justify-between text-xs text-slate-700">
+                    <span>{index + 1}. {item.embroidery_type || '-'}</span>
+                    <span className="font-semibold">{item.total} Transaksi</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

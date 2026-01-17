@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Package, Download, FileCheck, Trash2 } from 'lucide-react';
+import api from '../../services/api';
 
 const EditProduk = () => {
   const [formData, setFormData] = useState({
@@ -8,6 +9,7 @@ const EditProduk = () => {
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageData, setImageData] = useState(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -28,6 +30,11 @@ const EditProduk = () => {
       
       setSelectedImage(file);
       setImagePreview(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImageData(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -52,25 +59,45 @@ const EditProduk = () => {
     }
     
     try {
-      // Prepare form data for API submission
-      const productData = new FormData();
-      productData.append('jenisBordir', formData.jenisBordir);
-      productData.append('ukuranBordir', formData.ukuranBordir);
-      
-      if (selectedImage) {
-        productData.append('image', selectedImage);
+      const jenisList = formData.jenisBordir
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      const sizeValue = formData.ukuranBordir.match(/[\d.]+/);
+      const sizeCm = sizeValue ? Number(sizeValue[0]) : NaN;
+      if (Number.isNaN(sizeCm) || sizeCm <= 0) {
+        setErrors((prev) => ({
+          ...prev,
+          ukuranBordir: 'Ukuran harus berupa angka.'
+        }));
+        return;
       }
-      
-      // Here you would typically send the data to your backend
-      console.log('Sending product data to API:', {
-        jenisBordir: formData.jenisBordir,
-        ukuranBordir: formData.ukuranBordir,
-        image: selectedImage
+
+      const typeRequests = jenisList.map((name) =>
+        api.post('/admin/embroidery-types', { name })
+      );
+      const sizeRequest = api.post('/admin/embroidery-sizes', {
+        label: formData.ukuranBordir,
+        size_cm: sizeCm
       });
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
+      const requests = [...typeRequests, sizeRequest];
+      if (imageData) {
+        requests.push(
+          api.post('/admin/portfolio-photos', {
+            title: selectedImage?.name || 'Portofolio',
+            image_path: imageData
+          })
+        );
+      }
+
+      const results = await Promise.allSettled(requests);
+      const failed = results.find((result) => result.status === 'rejected');
+      if (failed) {
+        throw failed.reason;
+      }
+
       // Show success popup
       setShowSuccessPopup(true);
       
@@ -137,9 +164,10 @@ const EditProduk = () => {
                   <button 
                     type="button"
                     className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                    onClick={() => {
+                      onClick={() => {
                       setSelectedImage(null);
                       setImagePreview(null);
+                      setImageData(null);
                     }}
                   >
                     <Trash2 size={16} />

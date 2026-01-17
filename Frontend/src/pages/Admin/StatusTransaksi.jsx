@@ -16,55 +16,18 @@ import {
   Trash2,
   Download
 } from 'lucide-react';
+import api from '../../services/api';
 
-// Mock data - nanti ganti dengan axios call ke Laravel backend
-const mockStats = {
-  totalTransactions: 67,
-  totalProducts: 500,
-  totalRevenue: 200000000,
-  totalUsers: 257
+const formatOrderDetail = (order) => {
+  const parts = [
+    order?.service_type,
+    order?.embroidery_type,
+    order?.size_cm ? `${order.size_cm} cm` : null,
+    order?.quantity ? `${order.quantity} pcs` : null,
+    order?.shipping_method
+  ];
+  return parts.filter(Boolean).join(', ');
 };
-
-const mockSalesData = [
-  { month: 'Jan', sales: 45 },
-  { month: 'Feb', sales: 35 },
-  { month: 'Mar', sales: 60 },
-  { month: 'Apr', sales: 50 },
-  { month: 'Mei', sales: 40 },
-  { month: 'Jun', sales: 65 },
-  { month: 'Jul', sales: 55 },
-  { month: 'Agu', sales: 45 },
-  { month: 'Sep', sales: 70 },
-  { month: 'Okt', sales: 60 },
-  { month: 'Nov', sales: 50 },
-  { month: 'Des', sales: 75 }
-];
-
-const mockOrders = [
-  {
-    id: 'INV2025171212345',
-    customer: 'Budi Pertiwi',
-    address: 'RT 01/03, Kedungmundu, Tembalang, Semarang',
-    phone: '081234567890',
-    category: 'Bordir Topi',
-    type: 'Bordir 3D',
-    size: '20-24CM',
-    quantity: 20,
-    method: 'Pickup',
-    payment: 'Transfer BCA',
-    total: 1000000,
-    status: 'Proses'
-  }
-];
-
-const mockUsers = Array(15).fill(null).map((_, i) => ({
-  id: i + 1,
-  username: 'userjabordir',
-  name: 'Nama User',
-  email: 'emailuser@gmail.com',
-  phone: '081234567890',
-  password: 'Password*5'
-}));
 
 // Sidebar Component
 const Sidebar = ({ activeMenu, setActiveMenu }) => {
@@ -365,6 +328,58 @@ const StatusBarangPage = () => {
 
 // Status Transaksi Component
 const StatusTransaksiPage = () => {
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchTransactions = async () => {
+      try {
+        const response = await api.get('/admin/transactions');
+        const items = response.data.data || [];
+        if (!isMounted) return;
+        setTransactions(items);
+      } catch (error) {
+        console.error('Gagal memuat transaksi:', error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleUpdateStatus = async (transactionId, status) => {
+    try {
+      await api.post(`/admin/transactions/${transactionId}/status`, { status });
+      setTransactions((prev) =>
+        prev.map((transaction) =>
+          transaction.id === transactionId ? { ...transaction, status } : transaction
+        )
+      );
+    } catch (error) {
+      console.error('Gagal update status transaksi:', error);
+      alert('Gagal update status transaksi.');
+    }
+  };
+
+  const handleOpenProof = async (orderId) => {
+    if (!orderId) return;
+    try {
+      const response = await api.get(`/admin/orders/${orderId}/proof`, {
+        responseType: 'blob'
+      });
+      const fileUrl = URL.createObjectURL(response.data);
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Gagal membuka bukti pembayaran:', error);
+      alert('Bukti pembayaran belum tersedia.');
+    }
+  };
+
   return (
     <div className="p-4 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
@@ -387,32 +402,58 @@ const StatusTransaksiPage = () => {
             </tr>
           </thead>
           <tbody>
-            {mockOrders.slice(0, 8).map((order, i) => (
-              <tr key={i} className="border-t border-slate-200 text-slate-700">
-                <td className="px-4 py-3">{order.id}</td>
-                <td className="px-4 py-3">{order.customer}</td>
-                <td className="px-4 py-3">{order.phone}</td>
-                <td className="px-4 py-3">{order.address}</td>
-                <td className="px-4 py-3">
-                  {order.category}, {order.type}, {order.size}, {order.quantity} pcs, {order.method}
-                </td>
-                <td className="px-4 py-3">{order.payment}</td>
-                <td className="px-4 py-3">Rp{order.total.toLocaleString('id-ID')}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-center gap-2">
-                    <button className="w-6 h-6 rounded bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600">
-                      <Eye size={14} />
-                    </button>
-                    <button className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700">
-                      <FileCheck size={14} />
-                    </button>
-                    <button className="w-6 h-6 rounded bg-green-500 text-white flex items-center justify-center hover:bg-green-600">
-                      <FileCheck size={14} />
-                    </button>
-                  </div>
+            {loading && (
+              <tr>
+                <td className="px-4 py-3 text-slate-500" colSpan={8}>
+                  Memuat data...
                 </td>
               </tr>
-            ))}
+            )}
+            {!loading && transactions.length === 0 && (
+              <tr>
+                <td className="px-4 py-3 text-slate-500" colSpan={8}>
+                  Belum ada transaksi.
+                </td>
+              </tr>
+            )}
+            {transactions.map((transaction) => {
+              const order = transaction.order;
+              return (
+                <tr key={transaction.id} className="border-t border-slate-200 text-slate-700">
+                  <td className="px-4 py-3">{order?.order_number || `#${order?.id}`}</td>
+                  <td className="px-4 py-3">{order?.user?.name || '-'}</td>
+                  <td className="px-4 py-3">{order?.user?.no_telpon || '-'}</td>
+                  <td className="px-4 py-3">{order?.shipping_address || order?.user?.alamat || '-'}</td>
+                  <td className="px-4 py-3">{formatOrderDetail(order) || '-'}</td>
+                  <td className="px-4 py-3">{transaction.payment_method || '-'}</td>
+                  <td className="px-4 py-3">
+                    Rp{Number(order?.total_price || 0).toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        className="w-6 h-6 rounded bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600"
+                        onClick={() => handleOpenProof(order?.id)}
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700"
+                        onClick={() => handleUpdateStatus(transaction.id, 'paid')}
+                      >
+                        <FileCheck size={14} />
+                      </button>
+                      <button
+                        className="w-6 h-6 rounded bg-green-500 text-white flex items-center justify-center hover:bg-green-600"
+                        onClick={() => handleUpdateStatus(transaction.id, 'failed')}
+                      >
+                        <FileCheck size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

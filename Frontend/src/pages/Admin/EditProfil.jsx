@@ -1,15 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UserCircle, FileCheck } from 'lucide-react';
+import api from '../../services/api';
 
 const EditProfil = () => {
   const [profile, setProfile] = useState({
-    description: 'JA Bordir adalah usaha bordir yang mengutamakan kualitas, ketelitian, dan hasil akhir yang rap. Kami melayani berbagai kebutuhan bordir mulai dari seragam, logo, nama, hingga desain custom sesuai permintaan. Dengan didukung oleh tenaga profesional dan berpengalaman dan teknologi tinggi, JA Bordir berkomitmen memberikan hasil bordir yang kuat, detail, dan bernilai estetik tinggi. Kami juga bahwa setiap jahitan memiliki makna, dan setiap pesanan adalah kepercayaan. Karena itu, kami selalu mengutamakan kepuasan pelanggan melalui layanan cepat, ramah, dan hasil terbaik di setiap produk yang kami kerjakan.',
-    address: 'Purwodadi, Jawa Tengah',
-    mapsLink: 'https://googlemaps.com',
-    phone: '082010203020'
+    description: '',
+    address: '',
+    mapsLink: '',
+    phone: ''
   });
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchProfile = async () => {
+      try {
+        const response = await api.get('/admin/company-profile');
+        if (!isMounted) return;
+        setProfile({
+          description: response.data.description || '',
+          address: response.data.address || '',
+          mapsLink: response.data.google_maps_link || '',
+          phone: response.data.phone || ''
+        });
+      } catch (error) {
+        console.error('Gagal memuat profil perusahaan:', error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleSaveChanges = async () => {
     // Reset errors
@@ -41,34 +68,12 @@ const EditProfil = () => {
 
     try {
       // Prepare form data for API submission
-      const profileData = new FormData();
-      profileData.append('description', profile.description);
-      profileData.append('address', profile.address);
-      profileData.append('mapsLink', profile.mapsLink);
-      profileData.append('phone', profile.phone);
-
-      // Here you would typically send the data to your backend
-      // Example API call:
-      // const response = await fetch('http://localhost:8000/api/profile/update', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`, // if authentication is required
-      //   },
-      //   body: profileData,
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error(`HTTP error! status: ${response.status}`);
-      // }
-
-      // const result = await response.json();
-      // console.log('Profile updated successfully:', result);
-
-      // For demonstration purposes, I'm using a mock API call
-      console.log('Sending profile data to API:', profile);
-
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await api.put('/admin/company-profile', {
+        description: profile.description,
+        address: profile.address,
+        google_maps_link: profile.mapsLink,
+        phone: profile.phone
+      });
 
       // Show success popup
       setShowSuccessPopup(true);
@@ -108,6 +113,7 @@ const EditProfil = () => {
               value={profile.description}
               onChange={(e) => setProfile({...profile, description: e.target.value})}
               className={`w-full border ${errors.description ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-3 h-40`}
+              disabled={loading}
             />
             {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
           </div>
@@ -119,6 +125,7 @@ const EditProfil = () => {
               value={profile.address}
               onChange={(e) => setProfile({...profile, address: e.target.value})}
               className={`w-full border ${errors.address ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-2.5`}
+              disabled={loading}
             />
             {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
           </div>
@@ -130,6 +137,7 @@ const EditProfil = () => {
               value={profile.mapsLink}
               onChange={(e) => setProfile({...profile, mapsLink: e.target.value})}
               className={`w-full border ${errors.mapsLink ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-2.5`}
+              disabled={loading}
             />
             {errors.mapsLink && <p className="text-red-500 text-xs mt-1">{errors.mapsLink}</p>}
           </div>
@@ -141,6 +149,7 @@ const EditProfil = () => {
               value={profile.phone}
               onChange={(e) => setProfile({...profile, phone: e.target.value})}
               className={`w-full border ${errors.phone ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-2.5`}
+              disabled={loading}
             />
             {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
           </div>
@@ -148,6 +157,7 @@ const EditProfil = () => {
           <button 
             className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors"
             onClick={handleSaveChanges}
+            disabled={loading}
           >
             Simpan Perubahan
           </button>
