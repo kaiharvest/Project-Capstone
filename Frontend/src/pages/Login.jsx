@@ -43,7 +43,7 @@ export default function Login() {
     <>
       {/* BACK BUTTON */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate("/")}
         className="fixed top-6 left-6 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-[#010E31]/90 text-white shadow-lg hover:bg-[#010E31] transition cursor-pointer"
       >
         <ArrowLeft size={20} strokeWidth={2.5} />
