@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -482,6 +482,7 @@ const KelolaUserPage = () => {
   const [users, setUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [sortMode, setSortMode] = useState('name_asc');
 
   useEffect(() => {
     let isMounted = true;
@@ -518,49 +519,88 @@ const KelolaUserPage = () => {
     }
   };
 
+  const sortedUsers = useMemo(() => {
+    const items = [...users];
+    const toDateValue = (value) => {
+      if (!value) return 0;
+      const parsed = new Date(value).getTime();
+      return Number.isNaN(parsed) ? 0 : parsed;
+    };
+
+    items.sort((a, b) => {
+      if (sortMode === 'name_asc') {
+        return (a.name || '').localeCompare(b.name || '');
+      }
+      if (sortMode === 'name_desc') {
+        return (b.name || '').localeCompare(a.name || '');
+      }
+      if (sortMode === 'newest') {
+        return toDateValue(b.created_at) - toDateValue(a.created_at);
+      }
+      if (sortMode === 'oldest') {
+        return toDateValue(a.created_at) - toDateValue(b.created_at);
+      }
+      return 0;
+    });
+
+    return items;
+  }, [users, sortMode]);
+
   return (
     <div className="p-4 sm:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Users className="text-blue-700" size={28} />
           <h1 className="text-2xl font-bold text-blue-900">Data User</h1>
         </div>
-        <button className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-sm hover:bg-blue-700 transition-colors">
-          {loading ? 'Memuat...' : `${totalUsers} Pengguna Terdaftar`}
-        </button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <select
+            className="border border-slate-300 rounded-lg px-4 py-2 text-sm"
+            value={sortMode}
+            onChange={(event) => setSortMode(event.target.value)}
+          >
+            <option value="name_asc">Nama A-Z</option>
+            <option value="name_desc">Nama Z-A</option>
+            <option value="newest">Terbaru</option>
+            <option value="oldest">Terlama</option>
+          </select>
+          <button className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-sm hover:bg-blue-700 transition-colors">
+            {loading ? 'Memuat...' : `${totalUsers} Pengguna Terdaftar`}
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-blue-400 shadow-sm overflow-x-auto">
-        <table className="w-full text-sm min-w-[720px]">
-          <thead className="bg-blue-50 border-b border-blue-300">
-            <tr className="text-blue-800">
-              <th className="px-4 py-2 text-left font-semibold">Username</th>
-              <th className="px-4 py-2 text-left font-semibold">Nama Lengkap</th>
-              <th className="px-4 py-2 text-left font-semibold">Email</th>
-              <th className="px-4 py-2 text-left font-semibold">No. HP</th>
-              <th className="px-4 py-2 text-left font-semibold">Alamat</th>
-              <th className="px-4 py-2 text-center font-semibold">Aksi</th>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+        <table className="w-full text-xs min-w-[720px]">
+          <thead className="bg-slate-100 text-slate-700">
+            <tr>
+              <th className="px-4 py-3 text-left font-semibold w-14">No</th>
+              <th className="px-4 py-3 text-left font-semibold">Nama Lengkap</th>
+              <th className="px-4 py-3 text-left font-semibold">Email</th>
+              <th className="px-4 py-3 text-left font-semibold">No. HP</th>
+              <th className="px-4 py-3 text-left font-semibold">Alamat</th>
+              <th className="px-4 py-3 text-center font-semibold">Aksi</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr className="border-b border-blue-200 text-blue-700">
-                <td className="px-4 py-2" colSpan={6}>Memuat data...</td>
+              <tr className="border-b border-slate-200 text-slate-700">
+                <td className="px-4 py-3" colSpan={6}>Memuat data...</td>
               </tr>
             )}
             {!loading && users.length === 0 && (
-              <tr className="border-b border-blue-200 text-blue-700">
-                <td className="px-4 py-2" colSpan={6}>Belum ada user.</td>
+              <tr className="border-b border-slate-200 text-slate-700">
+                <td className="px-4 py-3" colSpan={6}>Belum ada user.</td>
               </tr>
             )}
-            {users.map((user) => (
-              <tr key={user.id} className="border-b border-blue-200 text-blue-700">
-                <td className="px-4 py-2">{user.email ? user.email.split('@')[0] : (user.name || '-')}</td>
-                <td className="px-4 py-2">{user.name || '-'}</td>
-                <td className="px-4 py-2">{user.email || '-'}</td>
-                <td className="px-4 py-2">{user.no_telpon || '-'}</td>
-                <td className="px-4 py-2">{user.alamat || '-'}</td>
-                <td className="px-4 py-2 text-center">
+            {sortedUsers.map((user, index) => (
+              <tr key={user.id} className="border-b border-slate-200 text-slate-700">
+                <td className="px-4 py-3">{index + 1}</td>
+                <td className="px-4 py-3">{user.name || '-'}</td>
+                <td className="px-4 py-3">{user.email || '-'}</td>
+                <td className="px-4 py-3">{user.no_telpon || '-'}</td>
+                <td className="px-4 py-3">{user.alamat || '-'}</td>
+                <td className="px-4 py-3 text-center">
                   <button
                     className="text-red-500 hover:text-red-600"
                     onClick={() => handleDelete(user.id)}
