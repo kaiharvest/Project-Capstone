@@ -11,7 +11,6 @@ import {
   BarChart3,
   TrendingUp,
   DollarSign,
-  Eye,
   FileCheck,
   Trash2,
   Download
@@ -388,12 +387,6 @@ const StatusBarangPage = () => {
               </div>
               <div className="flex items-start justify-end gap-2">
                 <button
-                  className="w-6 h-6 rounded bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600"
-                  onClick={() => handleOpenProof(order.id)}
-                >
-                  <Eye size={14} />
-                </button>
-                <button
                   className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700"
                   onClick={() => handleOpenDesign(order.id)}
                 >
@@ -484,7 +477,6 @@ const StatusTransaksiPage = () => {
 
               <div className="flex flex-col gap-3">
                 <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <Eye size={18} />
                   Lihat File
                 </button>
                 <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">

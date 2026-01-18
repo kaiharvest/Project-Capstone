@@ -289,7 +289,6 @@ const StatusBarangPage = () => {
                   Lihat File
                 </button>
                 <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <FileCheck size={18} />
                   Bukti Pembayaran
                 </button>
                 
@@ -451,12 +450,6 @@ const StatusTransaksiPage = () => {
                         onClick={() => handleOpenProof(order?.id)}
                       >
                         <Eye size={14} />
-                      </button>
-                      <button
-                        className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700"
-                        onClick={() => handleOpenDesign(order?.id)}
-                      >
-                        <FileCheck size={14} />
                       </button>
                       {transaction.status === 'paid' ? (
                         <div className="w-6 h-6 rounded bg-green-500 text-white flex items-center justify-center">
