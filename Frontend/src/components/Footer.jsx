@@ -1,7 +1,36 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Phone, Clock } from "lucide-react";
+import api from "../services/api";
 
 export default function Footer() {
+  const [profile, setProfile] = useState({
+    address: "",
+    google_maps_link: "",
+    phone: "",
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchProfile = async () => {
+      try {
+        const response = await api.get("/company-profile");
+        if (!isMounted) return;
+        setProfile({
+          address: response.data.address || "",
+          google_maps_link: response.data.google_maps_link || "",
+          phone: response.data.phone || "",
+        });
+      } catch (error) {
+        console.error("Gagal memuat profil perusahaan:", error);
+      }
+    };
+
+    fetchProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <footer className="bg-[#010E31] text-white">
       {/* Bar Atas */}
@@ -42,10 +71,17 @@ export default function Footer() {
         {/* Kolom 3 */}
         <div className="text-center md:text-left">
           <h3 className="font-semibold text-lg mb-3">ALAMAT JA BORDIR</h3>
-          <p className="text-sm opacity-50">Purwodadi, Jawa Tengah</p>
+          <p className="text-sm opacity-50">
+            {profile.address || "Purwodadi, Jawa Tengah"}
+          </p>
           <p className="text-sm">
             <span className="opacity-50">Kunjungi Workshop Kami : </span>
-            <a href="#" className="text-white">
+            <a
+              href={profile.google_maps_link || "#"}
+              className="text-white"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Google Map
             </a>
           </p>
@@ -58,7 +94,7 @@ export default function Footer() {
 
           <div className="flex items-center justify-center md:justify-start gap-2 text-sm mt-2 opacity-50">
             <Phone size={16} />
-            <span>Admin: 082020200200</span>
+            <span>Admin: {profile.phone || "082020200200"}</span>
           </div>
         </div>
       </div>

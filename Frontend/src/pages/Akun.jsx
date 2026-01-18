@@ -1,15 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from 'react-hot-toast'; // Import toast
+import api from "../services/api";
 
 const Akun = () => {
   const [user, setUser] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    no_telpon: "",
+    alamat: "",
+    current_password: "",
+    password: "",
+    password_confirmation: "",
+  });
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      setFormData((prev) => ({
+        ...prev,
+        name: parsedUser.name || "",
+        email: parsedUser.email || "",
+        no_telpon: parsedUser.no_telpon || "",
+        alamat: parsedUser.alamat || "",
+      }));
     } else {
       // Jika tidak ada data user di localStorage, redirect ke halaman login
       navigate("/login");
@@ -30,6 +49,47 @@ const Akun = () => {
     }, 1500); // Tunggu 1.5 detik
   };
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+
+    try {
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        no_telpon: formData.no_telpon,
+        alamat: formData.alamat,
+      };
+
+      if (formData.password) {
+        payload.current_password = formData.current_password;
+        payload.password = formData.password;
+        payload.password_confirmation = formData.password_confirmation;
+      }
+
+      const response = await api.put("/user/profile", payload);
+      const updatedUser = response.data.user || {};
+      const mergedUser = { ...user, ...updatedUser };
+      setUser(mergedUser);
+      localStorage.setItem("user", JSON.stringify(mergedUser));
+      setFormData((prev) => ({
+        ...prev,
+        current_password: "",
+        password: "",
+        password_confirmation: "",
+      }));
+      toast.success("Profil berhasil diperbarui.");
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        "Gagal memperbarui profil.";
+      toast.error(message);
+      console.error("Update profile error:", error.response || error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Menampilkan pesan loading jika data user belum siap
   if (!user) {
     return (
@@ -46,35 +106,103 @@ const Akun = () => {
           PROFIL PENGGUNA
         </h1>
 
-        <div className="space-y-4 text-gray-700">
+        <form className="space-y-4 text-gray-700" onSubmit={handleSubmit}>
           <div className="flex flex-col">
             <label className="text-[11px] font-semibold text-gray-500">
               Nama Lengkap
             </label>
-            <p className="text-base">{user.name}</p>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(event) =>
+                setFormData((prev) => ({ ...prev, name: event.target.value }))
+              }
+              className="border border-gray-200 rounded-lg px-4 py-2 text-sm"
+              required
+            />
           </div>
-          <hr />
           <div className="flex flex-col">
             <label className="text-[11px] font-semibold text-gray-500">
               Alamat Email
             </label>
-            <p className="text-base">{user.email}</p>
+            <input
+              type="email"
+              value={formData.email}
+              className="border border-gray-200 rounded-lg px-4 py-2 text-sm bg-gray-50"
+              disabled
+            />
           </div>
-          <hr />
           <div className="flex flex-col">
             <label className="text-[11px] font-semibold text-gray-500">
               Nomor Telepon
             </label>
-            <p className="text-base">{user.no_telpon || "-"}</p>
+            <input
+              type="text"
+              value={formData.no_telpon}
+              onChange={(event) =>
+                setFormData((prev) => ({ ...prev, no_telpon: event.target.value }))
+              }
+              className="border border-gray-200 rounded-lg px-4 py-2 text-sm"
+              required
+            />
           </div>
-          <hr />
           <div className="flex flex-col">
             <label className="text-[11px] font-semibold text-gray-500">
               Alamat
             </label>
-            <p className="text-base">{user.alamat || "-"}</p>
+            <textarea
+              value={formData.alamat}
+              onChange={(event) =>
+                setFormData((prev) => ({ ...prev, alamat: event.target.value }))
+              }
+              className="border border-gray-200 rounded-lg px-4 py-2 text-sm"
+              rows={2}
+              required
+            />
           </div>
-        </div>
+
+          <div className="pt-4 border-t border-gray-100 space-y-3">
+            <p className="text-xs font-semibold text-gray-500">Ubah Password</p>
+            <input
+              type="password"
+              placeholder="Password lama"
+              value={formData.current_password}
+              onChange={(event) =>
+                setFormData((prev) => ({ ...prev, current_password: event.target.value }))
+              }
+              className="border border-gray-200 rounded-lg px-4 py-2 text-sm w-full"
+            />
+            <input
+              type="password"
+              placeholder="Password baru"
+              value={formData.password}
+              onChange={(event) =>
+                setFormData((prev) => ({ ...prev, password: event.target.value }))
+              }
+              className="border border-gray-200 rounded-lg px-4 py-2 text-sm w-full"
+            />
+            <input
+              type="password"
+              placeholder="Konfirmasi password baru"
+              value={formData.password_confirmation}
+              onChange={(event) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  password_confirmation: event.target.value,
+                }))
+              }
+              className="border border-gray-200 rounded-lg px-4 py-2 text-sm w-full"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full h-11 mt-2 rounded-full bg-[#3E78A9] text-white font-semibold shadow-md hover:bg-[#326188] transition-colors"
+            disabled={saving}
+          >
+            {saving ? "Menyimpan..." : "Simpan Perubahan"}
+          </button>
+        </form>
 
         <button
           onClick={handleLogout}

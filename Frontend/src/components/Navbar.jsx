@@ -18,6 +18,7 @@ export default function Navbar() {
 
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isAdmin = loggedInUser?.role === "admin";
 
   useEffect(() => {
     // Memeriksa status login saat komponen di-mount
@@ -55,7 +56,7 @@ export default function Navbar() {
         <ul className="hidden md:flex items-center gap-8 font-medium">
           <li>
             <NavLink
-              to="/"
+              to={isAdmin ? "/admin/beranda" : "/"}
               end
               className={({ isActive }) => (isActive ? activeClass : normalClass)}
             >
@@ -63,41 +64,45 @@ export default function Navbar() {
             </NavLink>
           </li>
 
-          <li>
-            <NavLink
-              to="/profil"
-              className={({ isActive }) => (isActive ? activeClass : normalClass)}
-            >
-              Profil
-            </NavLink>
-          </li>
+          {!isAdmin && (
+            <>
+              <li>
+                <NavLink
+                  to="/profil"
+                  className={({ isActive }) => (isActive ? activeClass : normalClass)}
+                >
+                  Profil
+                </NavLink>
+              </li>
 
-          <li>
-            <NavLink
-              to="/portofolio"
-              className={({ isActive }) => (isActive ? activeClass : normalClass)}
-            >
-              Portofolio
-            </NavLink>
-          </li>
+              <li>
+                <NavLink
+                  to="/portofolio"
+                  className={({ isActive }) => (isActive ? activeClass : normalClass)}
+                >
+                  Portofolio
+                </NavLink>
+              </li>
 
-          <li>
-            <NavLink
-              to="/pesan"
-              className={({ isActive }) => (isActive ? activeClass : normalClass)}
-            >
-              Pesan
-            </NavLink>
-          </li>
+              <li>
+                <NavLink
+                  to="/pesan"
+                  className={({ isActive }) => (isActive ? activeClass : normalClass)}
+                >
+                  Pesan
+                </NavLink>
+              </li>
 
-          <li>
-            <NavLink
-              to="/pesanan"
-              className={({ isActive }) => (isActive ? activeClass : normalClass)}
-            >
-              Pesanan
-            </NavLink>
-          </li>
+              <li>
+                <NavLink
+                  to="/pesanan"
+                  className={({ isActive }) => (isActive ? activeClass : normalClass)}
+                >
+                  Pesanan
+                </NavLink>
+              </li>
+            </>
+          )}
         </ul>
 
         {/* === SEARCH + ICONS === */}
@@ -113,13 +118,15 @@ export default function Navbar() {
           </div>
 
           {/* CART */}
-          <Link to="/keranjang">
-            <img
-              src={cartIcon}
-              alt="Cart"
-              className="w-5 cursor-pointer hover:opacity-80"
-            />
-          </Link>
+          {!isAdmin && (
+            <Link to="/keranjang">
+              <img
+                src={cartIcon}
+                alt="Cart"
+                className="w-5 cursor-pointer hover:opacity-80"
+              />
+            </Link>
+          )}
 
           {/* Login Button / User Profile Link */}
           {loggedInUser ? (
@@ -171,19 +178,21 @@ export default function Navbar() {
                 />
                 <img src={searchIcon} alt="Search" className="w-4 opacity-60" />
               </div>
-              <Link to="/keranjang" onClick={() => setIsMenuOpen(false)}>
-                <img
-                  src={cartIcon}
-                  alt="Cart"
-                  className="w-6 cursor-pointer hover:opacity-80"
-                />
-              </Link>
+              {!isAdmin && (
+                <Link to="/keranjang" onClick={() => setIsMenuOpen(false)}>
+                  <img
+                    src={cartIcon}
+                    alt="Cart"
+                    className="w-6 cursor-pointer hover:opacity-80"
+                  />
+                </Link>
+              )}
             </div>
 
             <ul className="mt-6 space-y-4 font-medium text-lg">
               <li>
                 <NavLink
-                  to="/"
+                  to={isAdmin ? "/admin/beranda" : "/"}
                   end
                   onClick={() => setIsMenuOpen(false)}
                   className={({ isActive }) =>
@@ -195,58 +204,62 @@ export default function Navbar() {
                   Beranda
                 </NavLink>
               </li>
-              <li>
-                <NavLink
-                  to="/profil"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={({ isActive }) =>
-                    isActive
-                      ? `${activeClass} block px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500`
-                      : `${normalClass} block px-4 py-2`
-                  }
-                >
-                  Profil
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/portofolio"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={({ isActive }) =>
-                    isActive
-                      ? `${activeClass} block px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500`
-                      : `${normalClass} block px-4 py-2`
-                  }
-                >
-                  Portofolio
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/pesan"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={({ isActive }) =>
-                    isActive
-                      ? `${activeClass} block px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500`
-                      : `${normalClass} block px-4 py-2`
-                  }
-                >
-                  Pesan
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/pesanan"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={({ isActive }) =>
-                    isActive
-                      ? `${activeClass} block px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500`
-                      : `${normalClass} block px-4 py-2`
-                  }
-                >
-                  Pesanan
-                </NavLink>
-              </li>
+              {!isAdmin && (
+                <>
+                  <li>
+                    <NavLink
+                      to="/profil"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={({ isActive }) =>
+                        isActive
+                          ? `${activeClass} block px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500`
+                          : `${normalClass} block px-4 py-2`
+                      }
+                    >
+                      Profil
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to="/portofolio"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={({ isActive }) =>
+                        isActive
+                          ? `${activeClass} block px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500`
+                          : `${normalClass} block px-4 py-2`
+                      }
+                    >
+                      Portofolio
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to="/pesan"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={({ isActive }) =>
+                        isActive
+                          ? `${activeClass} block px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500`
+                          : `${normalClass} block px-4 py-2`
+                      }
+                    >
+                      Pesan
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to="/pesanan"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={({ isActive }) =>
+                        isActive
+                          ? `${activeClass} block px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500`
+                          : `${normalClass} block px-4 py-2`
+                      }
+                    >
+                      Pesanan
+                    </NavLink>
+                  </li>
+                </>
+              )}
             </ul>
 
             <div className="mt-8">

@@ -90,6 +90,7 @@ class AuthController extends Controller
                 'alamat' => 'required|string|max:255',
                 'no_telpon' => ['required', 'string', 'max:20', new IndonesianPhoneNumber()],
                 'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+                'current_password' => 'sometimes|required|string',
                 'password' => 'sometimes|required|string|min:6|confirmed', // Add password validation
             ]);
         } catch (ValidationException $e) {
@@ -109,6 +110,11 @@ class AuthController extends Controller
 
         // If a new password is provided, hash and add it to update data
         if ($request->has('password')) {
+            if (!Hash::check($validatedData['current_password'] ?? '', $user->password)) {
+                return response()->json([
+                    'message' => 'Password lama tidak sesuai.'
+                ], 401);
+            }
             $updateData['password'] = Hash::make($validatedData['password']);
         }
 

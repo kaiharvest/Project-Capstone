@@ -51,6 +51,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'verifyOtpAndResetPassword']);
+Route::get('/company-profile', [CompanyProfileController::class, 'show']);
 
 Route::middleware(['auth:sanctum','admin'])->prefix('admin')->group(function(){
 Route::get('/settings', [SettingsController::class,'show']);
