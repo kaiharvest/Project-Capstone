@@ -29,7 +29,6 @@ export default function Pesan() {
   const [jenisBordir, setJenisBordir] = useState("Bordir Timbul 3D");
   const [ukuranBordir, setUkuranBordir] = useState("20-24 CM");
   const [jumlahPemesanan, setJumlahPemesanan] = useState(1);
-  const [alamat, setAlamat] = useState("");
   const [metodeKirim, setMetodeKirim] = useState("");
 
   // ============================
@@ -108,7 +107,6 @@ export default function Pesan() {
       jenisBordir,
       ukuranBordir,
       jumlahPemesanan,
-      alamat,
       metodeKirim,
       designFileName: fileName || "",
       designPreviewUrl: preview || "",
@@ -134,7 +132,6 @@ export default function Pesan() {
       jenisBordir,
       ukuranBordir,
       jumlahPemesanan,
-      alamat,
       metodeKirim,
       designFileName: fileName || "",
       designPreviewUrl: preview || "",
@@ -191,7 +188,7 @@ export default function Pesan() {
       </section>
 
       {/* ===================== FORM + PREVIEW ===================== */}
-      <section className="px-4 sm:px-6 pb-20">
+      <section className="px-4 sm:px-6 pb-20 pr-10">
         <div className="max-w-6xl mx-auto bg-[#F17300] rounded-[28px] p-5 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
           {/* ========== KIRI: Form Input ========== */}
           <div className="space-y-4">
@@ -240,19 +237,6 @@ export default function Pesan() {
                   onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-white text-sm mb-2 font-medium">
-                Alamat Pengiriman
-              </label>
-              <input
-                type="text"
-                value={alamat}
-                onChange={(e) => setAlamat(e.target.value)}
-                placeholder="Masukkan alamat"
-                className="w-full px-5 py-3 rounded-2xl bg-white text-gray-700 outline-none placeholder:text-gray-400"
-              />
             </div>
 
             <div>
