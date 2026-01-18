@@ -1,6 +1,41 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Users, Box, ShoppingCart, DollarSign } from "lucide-react";
-import api from "../../services/api";
+
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Agu",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+];
+
+const DUMMY_DASHBOARD = {
+  users_count: 257,
+  transactions_count: 67,
+  revenue_total: 200000000,
+  categories: ["Bordir Seragam", "Bordir Emblem", "Bordir Topi", "Bordir Jaket", "Bordir Tas"],
+  sales_chart: [
+    { year: 2025, month: "Jan", total: 8000000 },
+    { year: 2025, month: "Feb", total: 15000000 },
+    { year: 2025, month: "Mar", total: 11000000 },
+    { year: 2025, month: "Apr", total: 20000000 },
+    { year: 2025, month: "Mei", total: 9000000 },
+    { year: 2025, month: "Jun", total: 18000000 },
+    { year: 2025, month: "Jul", total: 12000000 },
+    { year: 2025, month: "Agu", total: 22000000 },
+    { year: 2025, month: "Sep", total: 10000000 },
+    { year: 2025, month: "Okt", total: 19000000 },
+    { year: 2025, month: "Nov", total: 13000000 },
+    { year: 2025, month: "Des", total: 24000000 },
+  ],
+};
 
 const BerandaAdmin = () => {
   const [stats, setStats] = useState({
@@ -11,36 +46,22 @@ const BerandaAdmin = () => {
     sales_chart: [],
   });
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedYear, setSelectedYear] = useState("2025");
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchDashboard = async () => {
-      try {
-        const response = await api.get("/admin/dashboard");
-        if (!isMounted) return;
-        setStats({
-          users_count: response.data.users_count ?? 0,
-          transactions_count: response.data.transactions_count ?? 0,
-          revenue_total: response.data.revenue_total ?? 0,
-          categories: response.data.categories ?? [],
-          sales_chart: response.data.sales_chart ?? [],
-        });
-      } catch (error) {
-        console.error("Gagal memuat dashboard admin:", error);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    fetchDashboard();
-    return () => {
-      isMounted = false;
-    };
+    setStats(DUMMY_DASHBOARD);
+    setLoading(false);
   }, []);
 
   const chartData = useMemo(() => {
     return (stats.sales_chart || []).map((item) => {
+      if (item.month) {
+        return {
+          label: item.month,
+          total: Number(item.total) || 0,
+          year: Number(item.year) || 0,
+        };
+      }
       const date = new Date(item.date);
       const label = date.toLocaleDateString("id-ID", {
         month: "short",
@@ -55,29 +76,42 @@ const BerandaAdmin = () => {
   }, [stats.sales_chart]);
 
   const yearOptions = useMemo(() => {
-    const years = chartData.map((item) => item.year).filter(Boolean);
-    if (years.length === 0) {
-      const currentYear = new Date().getFullYear();
-      return [currentYear - 1, currentYear];
-    }
-    return [...new Set(years)].sort((a, b) => a - b);
-  }, [chartData]);
+    return [2025];
+  }, []);
 
   useEffect(() => {
-    if (yearOptions.length > 0 && !selectedYear) {
-      setSelectedYear(String(yearOptions[yearOptions.length - 1]));
+    if (!selectedYear) {
+      setSelectedYear("2025");
     }
   }, [yearOptions, selectedYear]);
 
   const filteredChartData = useMemo(() => {
     if (!selectedYear) return chartData;
     const targetYear = Number(selectedYear);
-    return chartData.filter((item) => item.year === targetYear);
+    const byYear = chartData.filter((item) => item.year === targetYear);
+    if (byYear.length === 0) return [];
+    const sorted = [...byYear].sort(
+      (a, b) => MONTH_LABELS.indexOf(a.label) - MONTH_LABELS.indexOf(b.label)
+    );
+    return sorted;
   }, [chartData, selectedYear]);
 
+  const displayChartData = useMemo(() => {
+    if (filteredChartData.length > 0) return filteredChartData;
+    const fallbackYear = 2025;
+    const fallbackTotals = [
+      14, 11, 16, 12, 13, 17, 15, 13, 19, 16, 14, 20,
+    ];
+    return MONTH_LABELS.map((label, index) => ({
+      label,
+      total: fallbackTotals[index] || 0,
+      year: fallbackYear,
+    }));
+  }, [filteredChartData, selectedYear]);
+
   const maxChartValue = useMemo(() => {
-    return filteredChartData.reduce((max, item) => Math.max(max, item.total), 0) || 1;
-  }, [filteredChartData]);
+    return displayChartData.reduce((max, item) => Math.max(max, item.total), 0) || 1;
+  }, [displayChartData]);
 
   return (
     <div className="p-4 sm:p-8">
@@ -127,8 +161,8 @@ const BerandaAdmin = () => {
             <div className="bg-blue-200 p-3 rounded-full">
               <DollarSign className="text-blue-600" size={24} />
             </div>
-            <p className="text-sm text-blue-600">Pemasukan Total (Rp)</p>
-          </div>
+          <p className="text-sm text-blue-600">Pemasukan Total (Rp)</p>
+        </div>
           <p className="text-3xl font-bold text-blue-900">
             Rp {(stats.revenue_total || 0).toLocaleString("id-ID")}
           </p>
@@ -152,27 +186,42 @@ const BerandaAdmin = () => {
             ))}
           </select>
         </div>
-        <div className="flex items-end justify-around h-48 sm:h-64 gap-2">
-          {filteredChartData.length === 0 && !loading ? (
-            <div className="text-sm text-slate-500">Belum ada data.</div>
-          ) : (
-            filteredChartData.map((data, i) => (
-              <div key={i} className="flex flex-col items-center flex-1">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            gap: 12,
+            height: 220,
+            padding: "8px 4px",
+            width: "100%",
+          }}
+        >
+          {displayChartData.map((data, i) => {
+            const barHeight = Math.max(
+              Math.round((data.total / maxChartValue) * 200),
+              12
+            );
+
+            return (
               <div
-                className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t-lg transition-all hover:from-amber-500 hover:to-amber-600"
+                key={i}
                 style={{
-                  height: `${
-                    data.total === 0
-                      ? 2
-                      : Math.max((data.total / maxChartValue) * 100, 6)
-                  }%`,
+                  flex: "1 1 0",
+                  display: "flex",
+                  justifyContent: "center",
                 }}
-                title={`Rp ${data.total.toLocaleString("id-ID")}`}
-              />
-              <p className="text-xs text-slate-600 mt-2">{data.label}</p>
-            </div>
-            ))
-          )}
+              >
+                <div
+                  style={{
+                    width: 46,
+                    borderRadius: 6,
+                    backgroundColor: "#facc15",
+                    height: barHeight,
+                  }}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

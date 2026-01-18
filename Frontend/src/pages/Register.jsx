@@ -13,7 +13,6 @@ export default function Register() {
   const [no_telpon, setNoTelpon] = useState("");
   const [email, setEmail] = useState("");
   const [alamat, setAlamat] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [password_confirmation, setPasswordConfirmation] = useState("");
 
@@ -41,7 +40,6 @@ export default function Register() {
         no_telpon,
         email,
         alamat,
-        username,
         password,
         password_confirmation,
       });
@@ -168,20 +166,6 @@ export default function Register() {
                     value={alamat}
                     onChange={(e) => setAlamat(e.target.value)}
                     required
-                  />
-                </div>
-
-                {/* Username */}
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-500 mb-2">
-                    Username:
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Masukkan username anda"
-                    className="w-full h-10 rounded-full bg-white px-5 text-sm text-gray-700 placeholder:text-gray-300 shadow-md border border-gray-200 outline-none"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
                   />
                 </div>
 
