@@ -11,6 +11,7 @@ const BerandaAdmin = () => {
     sales_chart: [],
   });
   const [loading, setLoading] = useState(true);
+  const [selectedYear, setSelectedYear] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -48,13 +49,35 @@ const BerandaAdmin = () => {
       return {
         label,
         total: Number(item.total) || 0,
+        year: date.getFullYear(),
       };
     });
   }, [stats.sales_chart]);
 
-  const maxChartValue = useMemo(() => {
-    return chartData.reduce((max, item) => Math.max(max, item.total), 0) || 1;
+  const yearOptions = useMemo(() => {
+    const years = chartData.map((item) => item.year).filter(Boolean);
+    if (years.length === 0) {
+      const currentYear = new Date().getFullYear();
+      return [currentYear - 1, currentYear];
+    }
+    return [...new Set(years)].sort((a, b) => a - b);
   }, [chartData]);
+
+  useEffect(() => {
+    if (yearOptions.length > 0 && !selectedYear) {
+      setSelectedYear(String(yearOptions[yearOptions.length - 1]));
+    }
+  }, [yearOptions, selectedYear]);
+
+  const filteredChartData = useMemo(() => {
+    if (!selectedYear) return chartData;
+    const targetYear = Number(selectedYear);
+    return chartData.filter((item) => item.year === targetYear);
+  }, [chartData, selectedYear]);
+
+  const maxChartValue = useMemo(() => {
+    return filteredChartData.reduce((max, item) => Math.max(max, item.total), 0) || 1;
+  }, [filteredChartData]);
 
   return (
     <div className="p-4 sm:p-8">
@@ -107,7 +130,7 @@ const BerandaAdmin = () => {
             <p className="text-sm text-blue-600">Pemasukan Total (Rp)</p>
           </div>
           <p className="text-3xl font-bold text-blue-900">
-            {(stats.revenue_total || 0).toLocaleString("id-ID")}
+            Rp {(stats.revenue_total || 0).toLocaleString("id-ID")}
           </p>
         </div>
       </div>
@@ -117,19 +140,34 @@ const BerandaAdmin = () => {
           <h2 className="text-2xl font-bold text-slate-900">
             Grafik Penjualan
           </h2>
-          <select className="border border-slate-300 rounded-lg px-4 py-2 text-sm">
-            <option>2026-2027</option>
+          <select
+            className="border border-slate-300 rounded-lg px-4 py-2 text-sm"
+            value={selectedYear}
+            onChange={(event) => setSelectedYear(event.target.value)}
+          >
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex items-end justify-around h-48 sm:h-64 gap-2">
-          {chartData.length === 0 && !loading ? (
+          {filteredChartData.length === 0 && !loading ? (
             <div className="text-sm text-slate-500">Belum ada data.</div>
           ) : (
-            chartData.map((data, i) => (
+            filteredChartData.map((data, i) => (
               <div key={i} className="flex flex-col items-center flex-1">
               <div
                 className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t-lg transition-all hover:from-amber-500 hover:to-amber-600"
-                style={{ height: `${(data.total / maxChartValue) * 100}%` }}
+                style={{
+                  height: `${
+                    data.total === 0
+                      ? 2
+                      : Math.max((data.total / maxChartValue) * 100, 6)
+                  }%`,
+                }}
+                title={`Rp ${data.total.toLocaleString("id-ID")}`}
               />
               <p className="text-xs text-slate-600 mt-2">{data.label}</p>
             </div>
