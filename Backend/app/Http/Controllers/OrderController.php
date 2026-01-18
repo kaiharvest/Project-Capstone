@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -327,6 +328,15 @@ class OrderController extends Controller
                 'payment_status' => 'pending', // Menunggu verifikasi
                 'status' => 'processing' // Ubah status pesanan ke processing
             ]);
+
+            Transaction::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'payment_method' => 'transfer',
+                    'status' => 'pending',
+                    'paid_at' => null
+                ]
+            );
         }
 
         return response()->json([
@@ -390,6 +400,15 @@ class OrderController extends Controller
                 'proof_image' => $imageName,
                 'status' => 'processing' // Ubah status menjadi processing setelah upload bukti
             ]);
+
+            Transaction::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'payment_method' => 'transfer',
+                    'status' => 'pending',
+                    'paid_at' => null
+                ]
+            );
 
             return response()->json([
                 'message' => 'Bukti pemesanan berhasil diunggah.',

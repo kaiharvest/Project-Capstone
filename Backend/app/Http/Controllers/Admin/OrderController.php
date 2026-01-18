@@ -147,15 +147,20 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
 
-        if (!$order->proof_image) {
+        if (!$order->payment_proof_path && !$order->proof_image) {
             return response()->json([
                 'message' => 'Bukti pemesanan tidak ditemukan.',
             ], 404);
         }
 
-        $path = storage_path('app/public/proofs/' . $order->proof_image);
+        $path = null;
+        if ($order->payment_proof_path) {
+            $path = storage_path('app/public/' . $order->payment_proof_path);
+        } elseif ($order->proof_image) {
+            $path = storage_path('app/public/proofs/' . $order->proof_image);
+        }
 
-        if (!file_exists($path)) {
+        if (!$path || !file_exists($path)) {
             return response()->json([
                 'message' => 'File bukti pemesanan tidak ditemukan.',
             ], 404);
