@@ -13,6 +13,7 @@ import Pembayaran from "./pages/Pembayaran"; // <-- TAMBAH (buat file Pembayaran
 import Pesanan from "./pages/Pesanan";
 import Keranjang from "./pages/Keranjang";
 import Akun from "./pages/Akun";
+import Invoice from "./pages/Invoice";
 
 // AUTH
 import Login from "./pages/Login";
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="/pesanan" element={<Pesanan />} />
           <Route path="/keranjang" element={<Keranjang />} />
           <Route path="/akun" element={<Akun />} />
+          <Route path="/invoice" element={<Invoice />} />
         </Route>
 
         {/* ===== AUTH ===== */}

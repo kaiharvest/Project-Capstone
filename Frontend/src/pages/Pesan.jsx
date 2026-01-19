@@ -30,6 +30,15 @@ export default function Pesan() {
   const [ukuranBordir, setUkuranBordir] = useState("20-24 CM");
   const [jumlahPemesanan, setJumlahPemesanan] = useState(1);
   const [metodeKirim, setMetodeKirim] = useState("");
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentOptions, setPaymentOptions] = useState([
+    { value: "BRI_66400234", label: "BRI NO REK. 66400234" },
+    { value: "QRIS", label: "QRIS" },
+  ]);
+  const [qrisImage, setQrisImage] = useState("");
+  const [proofFile, setProofFile] = useState(null);
+  const [paymentError, setPaymentError] = useState("");
 
   // ============================
   // Upload state (sesuai gambar)
@@ -74,20 +83,49 @@ export default function Pesan() {
     };
   }, [preview]);
 
+  useEffect(() => {
+    const savedOptions = localStorage.getItem("payment_options");
+    if (savedOptions) {
+      try {
+        const parsed = JSON.parse(savedOptions);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPaymentOptions(parsed);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const savedQris = localStorage.getItem("qris_image");
+    if (savedQris) {
+      setQrisImage(savedQris);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!paymentMethod && paymentOptions.length > 0) {
+      setPaymentMethod(paymentOptions[0].value);
+    }
+  }, [paymentMethod, paymentOptions]);
+
   // ============================
   // LOGIN CHECK (ubah key sesuai sistem login kamu)
   // ============================
   const isLoggedIn = useMemo(() => {
-    // opsi A: token
     const token = localStorage.getItem("token");
-    if (token) return true;
-
-    // opsi B: user object
-    // const user = localStorage.getItem("user");
-    // return !!user;
-
-    return false;
+    const accessToken = localStorage.getItem("access_token");
+    const user = localStorage.getItem("user");
+    return Boolean(token || accessToken || user);
   }, []);
+
+  const isFormValid = useMemo(() => {
+    return (
+      Boolean(jenisBordir) &&
+      Boolean(ukuranBordir) &&
+      Boolean(metodeKirim) &&
+      Number(jumlahPemesanan) > 0
+    );
+  }, [jenisBordir, ukuranBordir, metodeKirim, jumlahPemesanan]);
 
   // ============================
   // Aksi tombol
@@ -124,7 +162,13 @@ export default function Pesan() {
 
   const handlePesan = () => {
     // extra safety (walau tombol sudah disabled ketika belum login)
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+      localStorage.setItem("redirect_after_login", "/pesan");
+      navigate("/login");
+      return;
+    }
+
+    if (!isFormValid) return;
 
     const orderPayload = {
       orderNumber: `REG-${Date.now()}`, // sementara (backend nanti generate)
@@ -135,12 +179,14 @@ export default function Pesan() {
       metodeKirim,
       designFileName: fileName || "",
       designPreviewUrl: preview || "",
+      total: 0,
       status: "menunggu",
       createdAt: new Date().toISOString(),
     };
 
-    localStorage.setItem("pesanan_aktif", JSON.stringify(orderPayload));
-    navigate("/pesanan");
+    localStorage.setItem("order_draft", JSON.stringify(orderPayload));
+    setPaymentError("");
+    setShowPayment(true);
   };
 
   const layananData = [
@@ -148,10 +194,61 @@ export default function Pesan() {
     { nama: "Bordir Topi", icon: topi },
     { nama: "Bordir Emblem", icon: emblem },
     { nama: "Bordir Jaket", icon: jaket },
-    { nama: "Bordir Tas", icon: tas },
+    { nama: "Bordir Lainnya", icon: tas },
   ];
 
   const customFont = { fontFamily: '"Noto Sans Telugu", sans-serif' };
+  const showQris = paymentMethod === "QRIS";
+
+  const handlePaymentFile = (e) => {
+    const f = e.target.files?.[0] || null;
+    setProofFile(f);
+  };
+
+  const handlePaymentSubmit = () => {
+    setPaymentError("");
+
+    if (!proofFile) {
+      setPaymentError("Mohon unggah bukti transfer terlebih dahulu.");
+      return;
+    }
+
+    const savedDraft = localStorage.getItem("order_draft");
+    if (!savedDraft) {
+      setPaymentError("Data pesanan belum ada. Silakan isi form pemesanan.");
+      return;
+    }
+
+    const orderDraft = JSON.parse(savedDraft);
+    const invoiceData = {
+      orderNumber: orderDraft.orderNumber,
+      date: new Date().toISOString(),
+      layanan: orderDraft.layanan,
+      jenisBordir: orderDraft.jenisBordir,
+      ukuranBordir: orderDraft.ukuranBordir,
+      jumlahPemesanan: orderDraft.jumlahPemesanan,
+      metodeKirim: orderDraft.metodeKirim,
+      paymentMethod,
+      total: orderDraft.total || 0,
+    };
+
+    localStorage.setItem("invoice_data", JSON.stringify(invoiceData));
+    localStorage.setItem(
+      "invoice_file_name",
+      `Invoice-${orderDraft.orderNumber}.html`
+    );
+    localStorage.setItem(
+      "pesanan_aktif",
+      JSON.stringify({
+        ...orderDraft,
+        paymentMethod,
+        status: "menunggu",
+      })
+    );
+    localStorage.removeItem("order_draft");
+    setShowPayment(false);
+    navigate("/pesanan");
+  };
 
   return (
     <div className="w-full min-h-screen bg-white">
@@ -272,14 +369,20 @@ export default function Pesan() {
 
               <button
                 onClick={handlePesan}
-                disabled={!isLoggedIn}
+                disabled={!isLoggedIn || !isFormValid}
                 className={`px-10 py-3 rounded-full text-white font-semibold transition w-full sm:w-auto
     ${
-      isLoggedIn
+      isLoggedIn && isFormValid
         ? "bg-green-500 cursor-pointer hover:bg-green-600"
         : "bg-green-500/60" // OFF tanpa cursor silang
     }`}
-                title={!isLoggedIn ? "Login dulu untuk pesan" : ""}
+                title={
+                  !isLoggedIn
+                    ? "Login dulu untuk pesan"
+                    : !isFormValid
+                    ? "Lengkapi form terlebih dahulu"
+                    : ""
+                }
               >
                 Pesan
               </button>
@@ -345,6 +448,125 @@ export default function Pesan() {
           </div>
         </div>
       </section>
+
+      {showPayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-5xl rounded-3xl bg-orange-500 p-8 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white text-lg font-semibold">
+                Pembayaran
+              </h3>
+              <button
+                onClick={() => setShowPayment(false)}
+                className="text-white/90 hover:text-white"
+                aria-label="Tutup"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={`grid grid-cols-1 ${showQris ? "md:grid-cols-3" : "md:grid-cols-2"} gap-6`}>
+              <div className="md:col-span-2 bg-white rounded-2xl p-4 md:p-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Metode Pembayaran
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                  >
+                    {paymentOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="opacity-80"
+                    >
+                      <path
+                        d="M6 9l6 6 6-6"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bukti Transfer
+                  </label>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-gray-500 truncate">
+                      {proofFile ? proofFile.name : "Unggah Bukti Transfer"}
+                    </div>
+                    <label className="shrink-0 cursor-pointer rounded-xl bg-sky-200 px-5 py-3 text-sky-900 font-semibold hover:bg-sky-300 active:scale-[0.99]">
+                      Pilih File
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        className="hidden"
+                        onChange={handlePaymentFile}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {paymentError ? (
+                  <div className="mt-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                    {paymentError}
+                  </div>
+                ) : null}
+
+                <button
+                  onClick={handlePaymentSubmit}
+                  className="mt-5 w-full rounded-2xl bg-green-500 py-4 font-bold text-white hover:bg-green-600"
+                >
+                  Pesan
+                </button>
+                <div className="mt-3 text-sm text-gray-700 font-semibold">
+                  Total yang harus dibayar:{" "}
+                  <span className="text-gray-900">
+                    {formatRupiah(jumlahPemesanan * 0)}
+                  </span>
+                </div>
+              </div>
+
+              {showQris && (
+                <div className="bg-white rounded-2xl p-5 flex flex-col items-center justify-center">
+                  <div className="text-gray-700 font-semibold mb-2">QRIS</div>
+                  <div className="text-xs text-gray-500 mb-4 text-center">
+                    Scan untuk pembayaran
+                  </div>
+                  <div className="rounded-2xl border border-gray-200 p-3 bg-white">
+                    <img
+                      src={qrisImage}
+                      alt="QRIS"
+                      className="w-44 h-44 object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function formatRupiah(amount) {
+  const n = Number(amount);
+  if (Number.isNaN(n)) return String(amount);
+  return n.toLocaleString("id-ID", { style: "currency", currency: "IDR" });
 }

@@ -16,7 +16,6 @@ import {
   Trash2,
   Download
 } from 'lucide-react';
-import api from '../../services/api';
 
 const MONTHS = [
   'Januari',
@@ -32,6 +31,38 @@ const MONTHS = [
   'November',
   'Desember'
 ];
+
+const DUMMY_REPORT = {
+  total_transactions: 257,
+  products_sold: 500,
+  total_revenue: 100000000,
+  sales_chart: [
+    { date: '2025-01-01', total: 45 },
+    { date: '2025-02-01', total: 30 },
+    { date: '2025-03-01', total: 55 },
+    { date: '2025-04-01', total: 42 },
+    { date: '2025-05-01', total: 28 },
+    { date: '2025-06-01', total: 60 },
+    { date: '2025-07-01', total: 44 },
+    { date: '2025-08-01', total: 32 },
+    { date: '2025-09-01', total: 58 },
+    { date: '2025-10-01', total: 40 },
+    { date: '2025-11-01', total: 35 },
+    { date: '2025-12-01', total: 62 }
+  ],
+  summary: {
+    top_products: [
+      { id: 1, name: 'Bordir Seragam', qty: 58 },
+      { id: 2, name: 'Bordir Emblem', qty: 45 },
+      { id: 3, name: 'Bordir Topi', qty: 23 }
+    ],
+    top_embroidery_types: [
+      { embroidery_type: 'Bordir Biasa', total: 40 },
+      { embroidery_type: 'Bordir 3D', total: 30 },
+      { embroidery_type: 'Bordir 5 Warna', total: 23 }
+    ]
+  }
+};
 
 // Sidebar Component
 const Sidebar = ({ activeMenu, setActiveMenu }) => {
@@ -172,23 +203,9 @@ const LaporanPage = () => {
   }, [selectedMonth, selectedYear]);
 
   const fetchReport = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/admin/reports/sales', {
-        params: { period: periodDays }
-      });
-      setReport({
-        total_transactions: response.data.total_transactions ?? 0,
-        products_sold: response.data.products_sold ?? 0,
-        total_revenue: response.data.total_revenue ?? 0,
-        sales_chart: response.data.sales_chart ?? [],
-        summary: response.data.summary ?? { top_products: [], top_embroidery_types: [] }
-      });
-    } catch (error) {
-      console.error('Gagal memuat laporan penjualan:', error);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    setReport(DUMMY_REPORT);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -301,21 +318,42 @@ const LaporanPage = () => {
             <span className="text-xs text-slate-600">Jumlah Penjualan</span>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <div className="flex items-end justify-around h-48 gap-2 min-w-[520px]">
-            {chartData.length === 0 && !loading ? (
-              <div className="text-sm text-slate-500">Belum ada data.</div>
-            ) : (
-              chartData.map((data) => (
-                <div key={data.label} className="flex flex-col items-center flex-1">
-                  <div 
-                    className="w-full bg-amber-500 rounded-t-md"
-                    style={{ height: `${(data.total / maxChartValue) * 100}%` }}
-                  />
-                </div>
-              ))
-            )}
-          </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            gap: 12,
+            height: 220,
+            padding: "8px 4px",
+            width: "100%",
+          }}
+        >
+          {chartData.map((data, i) => {
+            const barHeight = Math.max(
+              Math.round((data.total / maxChartValue) * 200),
+              12
+            );
+
+            return (
+              <div
+                key={`${data.label}-${i}`}
+                style={{
+                  flex: "1 1 0",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    width: 46,
+                    borderRadius: 6,
+                    backgroundColor: "#facc15",
+                    height: barHeight,
+                  }}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
 

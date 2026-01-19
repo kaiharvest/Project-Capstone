@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 // import gambar
 import porto from "../assets/portofolio/porto.png";
@@ -12,6 +13,45 @@ import porto7 from "../assets/portofolio/porto7.png";
 import Footer from "../components/Footer";
 
 export default function Portofolio() {
+  const location = useLocation();
+  const [customImages, setCustomImages] = useState([]);
+
+  useEffect(() => {
+    if (location.state?.scrollToTop) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("portofolio_custom_images");
+    if (saved) {
+      try {
+        setCustomImages(JSON.parse(saved));
+      } catch {
+        setCustomImages([]);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleUpdated = () => {
+      const saved = localStorage.getItem("portofolio_custom_images");
+      if (saved) {
+        try {
+          setCustomImages(JSON.parse(saved));
+        } catch {
+          setCustomImages([]);
+        }
+      } else {
+        setCustomImages([]);
+      }
+    };
+
+    window.addEventListener("portofolio-updated", handleUpdated);
+    return () => {
+      window.removeEventListener("portofolio-updated", handleUpdated);
+    };
+  }, []);
   const portofolioImages = [
     porto,
     porto1,
@@ -48,6 +88,18 @@ export default function Portofolio() {
 
           {/* Grid Portofolio */}
           <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+            {customImages.map((item) => (
+              <div
+                key={item.id}
+                className="relative rounded-2xl overflow-hidden aspect-[4/3]"
+              >
+                <img
+                  src={item.dataUrl}
+                  alt={item.name}
+                  className="w-full h-full object-cover block"
+                />
+              </div>
+            ))}
             {[
               porto,
               porto1,

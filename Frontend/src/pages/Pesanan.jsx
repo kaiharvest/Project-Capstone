@@ -13,12 +13,13 @@ export default function Pesanan() {
 
   const [showPreview, setShowPreview] = useState(false);
 
-  const orderNumber = "20252812REG110975543333333";
+  const [orderNumber, setOrderNumber] = useState("");
 
   const [proofFileName, setProofFileName] = useState("");
   const [proofFileUrl, setProofFileUrl] = useState("");
   const [localUrl, setLocalUrl] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [invoiceHtml, setInvoiceHtml] = useState("");
 
   const fileRef = useRef(null);
 
@@ -34,6 +35,32 @@ export default function Pesanan() {
       if (localUrl) URL.revokeObjectURL(localUrl);
     };
   }, [localUrl]);
+
+  useEffect(() => {
+    const savedOrder = localStorage.getItem("pesanan_aktif");
+    if (savedOrder) {
+      const parsed = JSON.parse(savedOrder);
+      setOrderNumber(parsed.orderNumber || "");
+      if (parsed.status) setActiveTab(parsed.status);
+    }
+
+    const savedInvoice = localStorage.getItem("invoice_data");
+    const fileName = localStorage.getItem("invoice_file_name");
+    if (savedInvoice) {
+      const data = JSON.parse(savedInvoice);
+      setOrderNumber((prev) => prev || data.orderNumber || "");
+      setInvoiceHtml(buildInvoiceHtml(data));
+      setProofFileName(fileName || `Invoice-${data.orderNumber || "pesanan"}.html`);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!invoiceHtml) return;
+    const blob = new Blob([invoiceHtml], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    setProofFileUrl(url);
+    setLocalUrl(url);
+  }, [invoiceHtml]);
 
   // CONTOH: STATUS & FILE DARI BACKEND
   // useEffect(() => {
@@ -72,6 +99,7 @@ export default function Pesanan() {
 
   const isImage = (name) => /\.(jpg|jpeg|png|webp)$/i.test(name);
   const isPdf = (name) => /\.pdf$/i.test(name);
+  const isHtml = (name) => /\.html?$/i.test(name);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -125,7 +153,7 @@ export default function Pesanan() {
 
                   <div className="flex flex-col sm:flex-row gap-3 items-center">
                     <div className="flex-1 rounded-full px-5 py-2.5 bg-white shadow-sm border border-white/60 text-sm text-slate-500 truncate">
-                      {proofFileName || "Belum ada file desain"}
+                      {proofFileName || "Belum ada invoice"}
                     </div>
 
                     {proofFileUrl ? (
@@ -166,9 +194,9 @@ export default function Pesanan() {
                 className={`h-32 sm:h-36 rounded-xl bg-white flex items-center justify-center cursor-pointer transition ${
                   proofFileUrl ? "hover:shadow-md" : "opacity-60 cursor-default"
                 }`}
-                title={proofFileUrl ? "Lihat File" : "Belum ada file"}
+                title={proofFileUrl ? "Lihat Invoice" : "Belum ada invoice"}
               >
-                <span className="font-semibold text-gray-600">Lihat File</span>
+                <span className="font-semibold text-gray-600">Lihat Invoice</span>
               </div>
             </div>
           </div>
@@ -212,10 +240,50 @@ export default function Pesanan() {
                   className="w-full h-[70vh]"
                 />
               )}
+              {isHtml(proofFileName) && (
+                <iframe
+                  src={proofFileUrl}
+                  className="w-full h-[70vh]"
+                />
+              )}
             </div>
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function buildInvoiceHtml(data) {
+  const safe = (value) => String(value || "");
+  return `<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <title>Invoice ${safe(data.orderNumber)}</title>
+    <style>
+      body{font-family:Arial,Helvetica,sans-serif;margin:32px;color:#0f172a}
+      .card{border:1px solid #e2e8f0;border-radius:12px;padding:24px;max-width:720px;margin:0 auto}
+      h1{font-size:22px;margin:0 0 8px}
+      .meta{font-size:12px;color:#64748b;margin-bottom:16px}
+      .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e2e8f0}
+      .row:last-child{border-bottom:none}
+      .label{font-weight:600}
+      .total{font-size:18px;font-weight:700;margin-top:12px}
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Invoice Pemesanan</h1>
+      <div class="meta">Nomor: ${safe(data.orderNumber)} | Tanggal: ${new Date(data.date).toLocaleString("id-ID")}</div>
+      <div class="row"><span class="label">Layanan</span><span>${safe(data.layanan)}</span></div>
+      <div class="row"><span class="label">Jenis Bordir</span><span>${safe(data.jenisBordir)}</span></div>
+      <div class="row"><span class="label">Ukuran Bordir</span><span>${safe(data.ukuranBordir)}</span></div>
+      <div class="row"><span class="label">Jumlah</span><span>${safe(data.jumlahPemesanan)}</span></div>
+      <div class="row"><span class="label">Metode Pengiriman</span><span>${safe(data.metodeKirim)}</span></div>
+      <div class="row"><span class="label">Metode Pembayaran</span><span>${safe(data.paymentMethod)}</span></div>
+      <div class="total">Total: Rp ${Number(data.total || 0).toLocaleString("id-ID")}</div>
+    </div>
+  </body>
+</html>`;
 }

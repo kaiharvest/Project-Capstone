@@ -1,5 +1,7 @@
 // src/components/Hero.jsx
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { MoreHorizontal } from "lucide-react";
 
 // icons
 import leftArrow from "../assets/icons/left.svg";
@@ -160,17 +162,31 @@ export default function Beranda() {
         </p>
 
         <div className="max-w-6xl mx-auto mt-8 sm:mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 sm:gap-6">
-          {[seragam, topi, emblem, jaket, tas].map((icon, i) => (
+          {[
+            { icon: seragam, label: "Bordir Seragam", type: "image" },
+            { icon: topi, label: "Bordir Topi", type: "image" },
+            { icon: emblem, label: "Bordir Emblem", type: "image" },
+            { icon: jaket, label: "Bordir Jaket", type: "image" },
+            { icon: tas, label: "Bordir Lainnya", type: "ellipsis" },
+          ].map((item) => (
             <div
-              key={i}
+              key={item.label}
               className="flex flex-col items-center border-2 border-[#81A4CD]/80 rounded-3xl p-4 sm:p-6 hover:shadow-lg transition"
             >
-              <img src={icon} alt="Layanan" className="w-12 sm:w-16 md:w-24 opacity-80" />
+              {item.type === "ellipsis" ? (
+                <MoreHorizontal className="w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24 opacity-80 text-[#A9C0E0]" />
+              ) : (
+                <img
+                  src={item.icon}
+                  alt={item.label}
+                  className="w-12 sm:w-16 md:w-24 opacity-80"
+                />
+              )}
               <p
                 style={{ fontFamily: '"Noto Sans Telugu", sans-serif' }}
                 className="mt-3 text-[#3E7CB1] font-semibold text-[10px] sm:text-sm"
               >
-                {["Bordir Seragam", "Bordir Topi", "Bordir Emblem", "Bordir Jaket", "Bordir Tas"][i]}
+                {item.label}
               </p>
             </div>
           ))}
@@ -178,7 +194,7 @@ export default function Beranda() {
       </section>
 
       {/* ================= PORTOFOLIO ================= */}
-      <section className="bg-[#F17300] py-12 sm:py-16 px-4 sm:px-6 rounded-tl-4xl">
+      <section className="bg-[#F17300] py-12 sm:py-16 px-4 sm:px-6">
         <div className="text-center mb-10 text-white">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">
             Portofolio JA Bordir
@@ -214,9 +230,13 @@ export default function Beranda() {
           </div>
 
         <div className="flex justify-center mt-8 sm:mt-10">
-          <button className="bg-[#3E7CB1] hover:bg-[#356a99] text-white font-semibold px-8 sm:px-10 py-2.5 sm:py-3 rounded-lg shadow-lg transition">
+          <Link
+            to="/portofolio"
+            state={{ scrollToTop: true }}
+            className="bg-[#3E7CB1] hover:bg-[#356a99] text-white font-semibold px-8 sm:px-10 py-2.5 sm:py-3 rounded-lg shadow-lg transition"
+          >
             Lihat Lengkap
-          </button>
+          </Link>
         </div>
       </section>
 

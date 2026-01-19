@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import logo from "../assets/logo.png";
-import searchIcon from "../assets/icons/search.svg";
 import cartIcon from "../assets/icons/shop.svg";
 // import userIcon from "../assets/icons/user.svg"; // Tidak lagi diperlukan jika menggunakan teks "Login"
 
@@ -105,18 +104,8 @@ export default function Navbar() {
           )}
         </ul>
 
-        {/* === SEARCH + ICONS === */}
+        {/* === ICONS === */}
         <div className="hidden md:flex items-center gap-5">
-          {/* SEARCH BAR */}
-          <div className="hidden md:flex bg-white w-60 px-4 py-2 rounded-full items-center">
-            <input
-              type="text"
-              placeholder="Cari"
-              className="flex-grow outline-none text-sm text-gray-700 bg-transparent"
-            />
-            <img src={searchIcon} alt="Search" className="w-4 opacity-60" />
-          </div>
-
           {/* CART */}
           {!isAdmin && (
             <Link to="/keranjang">
@@ -169,15 +158,24 @@ export default function Navbar() {
               </button>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="bg-white w-full px-4 py-2 rounded-full items-center flex">
-                <input
-                  type="text"
-                  placeholder="Cari pesan / portofolio..."
-                  className="flex-grow outline-none text-sm text-gray-700 bg-transparent"
-                />
-                <img src={searchIcon} alt="Search" className="w-4 opacity-60" />
-              </div>
+            <div className="flex items-center justify-between gap-3">
+              {loggedInUser ? (
+                <Link
+                  to="/akun"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-white bg-orange-500 hover:bg-orange-600 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200"
+                >
+                  {loggedInUser.name}
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="bg-[#3E78A9] text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#326188] transition-colors duration-200"
+                >
+                  Login
+                </Link>
+              )}
               {!isAdmin && (
                 <Link to="/keranjang" onClick={() => setIsMenuOpen(false)}>
                   <img
@@ -262,25 +260,6 @@ export default function Navbar() {
               )}
             </ul>
 
-            <div className="mt-8">
-              {loggedInUser ? (
-                <Link
-                  to="/akun"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full text-center text-white bg-orange-500 hover:bg-orange-600 rounded-full px-4 py-3 text-base font-semibold transition-colors duration-200 block"
-                >
-                  {loggedInUser.name}
-                </Link>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full text-center bg-[#3E78A9] text-white px-4 py-3 rounded-full text-base font-semibold hover:bg-[#326188] transition-colors duration-200 block"
-                >
-                  Login
-                </Link>
-              )}
-            </div>
           </div>
         </>
       )}

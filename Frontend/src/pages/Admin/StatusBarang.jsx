@@ -18,8 +18,8 @@ import {
 import api from '../../services/api';
 
 const STATUS_OPTIONS = [
-  { label: 'Proses', value: 'pending' },
-  { label: 'Finishing', value: 'processing' },
+  { label: 'Menunggu', value: 'pending' },
+  { label: 'Proses', value: 'processing' },
   { label: 'Selesai', value: 'confirmed' }
 ];
 
