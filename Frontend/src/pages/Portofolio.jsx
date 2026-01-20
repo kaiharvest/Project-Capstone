@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import api from "../services/api";
 
 // import gambar
 import porto from "../assets/portofolio/porto.png";
@@ -10,11 +11,10 @@ import porto4 from "../assets/portofolio/porto4.png";
 import porto5 from "../assets/portofolio/porto5.png";
 import porto6 from "../assets/portofolio/porto6.png";
 import porto7 from "../assets/portofolio/porto7.png";
-import Footer from "../components/Footer";
 
 export default function Portofolio() {
   const location = useLocation();
-  const [customImages, setCustomImages] = useState([]);
+  const [portfolioPhotos, setPortfolioPhotos] = useState([]);
 
   useEffect(() => {
     if (location.state?.scrollToTop) {
@@ -23,34 +23,26 @@ export default function Portofolio() {
   }, [location.state]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("portofolio_custom_images");
-    if (saved) {
+    let isMounted = true;
+    const fetchPortfolio = async () => {
       try {
-        setCustomImages(JSON.parse(saved));
-      } catch {
-        setCustomImages([]);
+        const response = await api.get("/portfolio-photos");
+        if (!isMounted) return;
+        setPortfolioPhotos(response.data.data || []);
+      } catch (error) {
+        console.error("Gagal memuat portofolio:", error);
       }
-    }
+    };
+
+    fetchPortfolio();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  useEffect(() => {
-    const handleUpdated = () => {
-      const saved = localStorage.getItem("portofolio_custom_images");
-      if (saved) {
-        try {
-          setCustomImages(JSON.parse(saved));
-        } catch {
-          setCustomImages([]);
-        }
-      } else {
-        setCustomImages([]);
-      }
-    };
-
-    window.addEventListener("portofolio-updated", handleUpdated);
-    return () => {
-      window.removeEventListener("portofolio-updated", handleUpdated);
-    };
+  const storageBaseUrl = useMemo(() => {
+    const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+    return base.replace(/\/api$/, "");
   }, []);
   const portofolioImages = [
     porto,
@@ -88,14 +80,18 @@ export default function Portofolio() {
 
           {/* Grid Portofolio */}
           <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {customImages.map((item) => (
+            {portfolioPhotos.map((item) => (
               <div
                 key={item.id}
                 className="relative rounded-2xl overflow-hidden aspect-[4/3]"
               >
                 <img
-                  src={item.dataUrl}
-                  alt={item.name}
+                  src={
+                    item.image_path
+                      ? `${storageBaseUrl}/storage/${encodeURI(item.image_path)}`
+                      : porto
+                  }
+                  alt={item.title || "Portofolio"}
                   className="w-full h-full object-cover block"
                 />
               </div>

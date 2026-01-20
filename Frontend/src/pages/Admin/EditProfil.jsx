@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { UserCircle, FileCheck } from 'lucide-react';
 import api from '../../services/api';
 
@@ -12,11 +12,13 @@ const EditProfil = () => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
-  const fileInputRef = useRef(null);
-  const editInputRef = useRef(null);
 
-  const [customImages, setCustomImages] = useState([]);
-  const [editingId, setEditingId] = useState(null);
+  const [portfolioPhotos, setPortfolioPhotos] = useState([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(true);
+  const [portfolioForm, setPortfolioForm] = useState({
+    imageFile: null,
+    imagePreview: null,
+  });
 
   const [paymentOptions, setPaymentOptions] = useState([
     { value: 'BRI_66400234', label: 'BRI NO REK. 66400234' },
@@ -52,15 +54,6 @@ const EditProfil = () => {
   }, []);
 
   useEffect(() => {
-    const savedImages = localStorage.getItem('portofolio_custom_images');
-    if (savedImages) {
-      try {
-        setCustomImages(JSON.parse(savedImages));
-      } catch {
-        setCustomImages([]);
-      }
-    }
-
     const savedOptions = localStorage.getItem('payment_options');
     if (savedOptions) {
       try {
@@ -77,6 +70,31 @@ const EditProfil = () => {
     if (savedQris) {
       setQrisImagePreview(savedQris);
     }
+  }, []);
+
+  const storageBaseUrl = useMemo(() => {
+    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+    return base.replace(/\/api$/, '');
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPortfolio = async () => {
+      try {
+        const response = await api.get('/admin/portfolio-photos');
+        if (!isMounted) return;
+        setPortfolioPhotos(response.data.data || []);
+      } catch (error) {
+        console.error('Gagal memuat portofolio:', error);
+      } finally {
+        if (isMounted) setPortfolioLoading(false);
+      }
+    };
+
+    fetchPortfolio();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleSaveChanges = async () => {
@@ -129,52 +147,57 @@ const EditProfil = () => {
     }
   };
 
-  const persistImages = (items) => {
-    setCustomImages(items);
-    localStorage.setItem('portofolio_custom_images', JSON.stringify(items));
-    window.dispatchEvent(new Event('portofolio-updated'));
-  };
-
-  const handleAddImage = (file) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const next = [
-        {
-          id: `PF-${Date.now()}`,
-          name: file.name,
-          dataUrl: reader.result
-        },
-        ...customImages
-      ];
-      persistImages(next);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleFileChange = (event) => {
-    const file = event.target.files?.[0];
+  const handlePortfolioImageChange = (file) => {
     if (!file) return;
-    handleAddImage(file);
-    event.target.value = '';
+    if (!file.type.match('image/jpeg') && !file.type.match('image/png')) {
+      alert('Hanya file JPG dan PNG yang diperbolehkan');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran file maksimal 5MB');
+      return;
+    }
+    setPortfolioForm((prev) => ({
+      ...prev,
+      imageFile: file,
+      imagePreview: URL.createObjectURL(file),
+    }));
   };
 
-  const handleEditChange = (event) => {
-    const file = event.target.files?.[0];
-    if (!file || !editingId) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const next = customImages.map((item) =>
-        item.id === editingId ? { ...item, name: file.name, dataUrl: reader.result } : item
-      );
-      persistImages(next);
-      setEditingId(null);
-    };
-    reader.readAsDataURL(file);
-    event.target.value = '';
+  const handleAddPortfolio = async () => {
+    if (!portfolioForm.imageFile) {
+      alert('Foto portofolio wajib diunggah.');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('image', portfolioForm.imageFile);
+
+      const response = await api.post('/admin/portfolio-photos', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setPortfolioPhotos((prev) => [response.data, ...prev]);
+      setPortfolioForm({
+        imageFile: null,
+        imagePreview: null,
+      });
+    } catch (error) {
+      console.error('Gagal menambah portofolio:', error);
+      alert('Gagal menambah portofolio.');
+    }
   };
 
-  const handleDeleteImage = (id) => {
-    persistImages(customImages.filter((item) => item.id !== id));
+  const handleDeletePortfolio = async (photoId) => {
+    if (!window.confirm('Hapus foto portofolio ini?')) return;
+    try {
+      await api.delete(`/admin/portfolio-photos/${photoId}`);
+      setPortfolioPhotos((prev) => prev.filter((item) => item.id !== photoId));
+    } catch (error) {
+      console.error('Gagal hapus portofolio:', error);
+      alert('Gagal hapus portofolio.');
+    }
   };
 
   const handleAddMethod = () => {
@@ -285,65 +308,97 @@ const EditProfil = () => {
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-slate-800">Edit Portofolio</h2>
           <p className="text-xs text-slate-500">
-            Tambahkan, ganti, atau hapus foto portofolio.
+            Upload foto portofolio.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors w-full sm:w-auto"
-          >
-            Tambah Foto
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-          <input
-            ref={editInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleEditChange}
-          />
-        </div>
-
-        {customImages.length === 0 ? (
+        {portfolioLoading ? (
+          <p className="text-sm text-slate-500">Memuat...</p>
+        ) : portfolioPhotos.length === 0 ? (
           <p className="text-sm text-slate-500">Belum ada foto portofolio.</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {customImages.map((item) => (
-              <div key={item.id} className="relative rounded-xl overflow-hidden">
-                <img
-                  src={item.dataUrl}
-                  alt={item.name}
-                  className="w-full h-32 object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center gap-2">
-                  <button
-                    onClick={() => {
-                      setEditingId(item.id);
-                      editInputRef.current?.click();
-                    }}
-                    className="px-3 py-1 rounded-full bg-white text-slate-800 text-xs font-semibold"
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-slate-600">Daftar Foto</h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+              {portfolioPhotos.map((item) => {
+                const imageUrl = item.image_path
+                  ? `${storageBaseUrl}/storage/${encodeURI(item.image_path)}`
+                  : '';
+                return (
+                  <div
+                    key={item.id}
+                    className="relative rounded-xl overflow-hidden border border-slate-200"
                   >
-                    Ganti
-                  </button>
-                  <button
-                    onClick={() => handleDeleteImage(item.id)}
-                    className="px-3 py-1 rounded-full bg-red-500 text-white text-xs font-semibold"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt="Portofolio"
+                        className="w-full h-32 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-32 bg-slate-100" />
+                    )}
+                    <button
+                      onClick={() => handleDeletePortfolio(item.id)}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-red-600"
+                      title="Hapus"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
+
+        <div className="space-y-4">
+          <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center">
+            {portfolioForm.imagePreview ? (
+              <div className="relative">
+                <img
+                  src={portfolioForm.imagePreview}
+                  alt="Preview"
+                  className="max-h-52 mx-auto rounded-lg object-contain"
+                />
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  onClick={() =>
+                    setPortfolioForm((prev) => ({
+                      ...prev,
+                      imageFile: null,
+                      imagePreview: null,
+                    }))
+                  }
+                >
+                  x
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="text-slate-700 font-semibold text-sm mb-2">Tambah Foto</p>
+                <label className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer inline-block">
+                  Pilih File
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => handlePortfolioImageChange(event.target.files[0])}
+                  />
+                </label>
+              </>
+            )}
+          </div>
+          <button
+            onClick={handleAddPortfolio}
+            className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors w-full sm:w-auto"
+          >
+            Upload Foto
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 max-w-4xl w-full mt-8">
