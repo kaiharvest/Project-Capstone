@@ -1,4 +1,5 @@
 // Pesanan.jsx
+<<<<<<< Updated upstream
 import React, { useEffect, useState } from "react";
 import { jsPDF } from "jspdf";
 import logo from "../assets/logo.png";
@@ -211,10 +212,83 @@ export default function Pesanan() {
     doc.save(`Invoice-${invoiceNo}.pdf`);
   };
 
+=======
+import React, { useEffect, useMemo, useState } from "react";
+import api from "../services/api";
+
+const TABS = [
+  { key: "menunggu", label: "Menunggu", color: "#F79A19", statuses: ["pending"] },
+  { key: "diproses", label: "Diproses", color: "#FFE52A", statuses: ["processing"] },
+  { key: "selesai", label: "Selesai", color: "#BBCB64", statuses: ["confirmed"] },
+];
+
+export default function Pesanan() {
+  const [activeTab, setActiveTab] = useState("menunggu");
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        const response = await api.get("/orders");
+        if (!isMounted) return;
+        setOrders(response.data.data || []);
+      } catch (error) {
+        if (isMounted) {
+          setErrorMsg("Gagal memuat pesanan.");
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchOrders();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredOrders = useMemo(() => {
+    const tab = TABS.find((item) => item.key === activeTab);
+    if (!tab) return [];
+    return orders.filter((order) => tab.statuses.includes(order.status));
+  }, [orders, activeTab]);
+
+  const handleOpenFile = async (orderId, type) => {
+    try {
+      const endpoint =
+        type === "design"
+          ? `/orders/${orderId}/design-image`
+          : `/orders/${orderId}/payment-proof`;
+      const response = await api.get(endpoint, { responseType: "blob" });
+      const fileUrl = URL.createObjectURL(response.data);
+      window.open(fileUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      if (type === "payment") {
+        try {
+          const response = await api.get(`/orders/${orderId}/proof`, {
+            responseType: "blob",
+          });
+          const fileUrl = URL.createObjectURL(response.data);
+          window.open(fileUrl, "_blank", "noopener,noreferrer");
+          return;
+        } catch {
+          // ignore fallback error
+        }
+      }
+      alert("File belum tersedia.");
+    }
+  };
+
+>>>>>>> Stashed changes
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* ===== MAIN CONTENT ===== */}
       <main className="flex-1 px-4 sm:px-6 py-10">
+<<<<<<< Updated upstream
         <div className="max-w-6xl mx-auto space-y-6">
           {orders.length === 0 && (
             <div className="text-center text-slate-500 py-16">
@@ -296,42 +370,95 @@ export default function Pesanan() {
               </div>
             );
           })}
+=======
+        <div className="max-w-6xl mx-auto">
+          {/* ===== TABS ===== */}
+          <div className="flex flex-wrap gap-3 mb-6">
+            {TABS.map((tab) => {
+              const active = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  style={active && tab.color ? { backgroundColor: tab.color } : {}}
+                  className={`px-5 py-2 rounded-full font-semibold ${
+                    active
+                      ? "text-black"
+                      : "bg-slate-200 text-slate-500"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {loading ? (
+            <div className="text-slate-500">Memuat pesanan...</div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="text-slate-500">Belum ada pesanan.</div>
+          ) : (
+            <div className="space-y-5">
+              {filteredOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="rounded-3xl p-4 sm:p-6 shadow-lg bg-[#F17300] text-white"
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <div className="lg:col-span-2 space-y-3">
+                      <div>
+                        <p className="text-sm font-semibold">Nomor Pemesanan</p>
+                        <p className="text-lg font-bold">{order.order_number}</p>
+                      </div>
+                      <div className="text-sm">
+                        Total:{" "}
+                        <span className="font-semibold">
+                          Rp {Number(order.total_price || 0).toLocaleString("id-ID")}
+                        </span>
+                      </div>
+                      {order.estimated_completion_date && (
+                        <div className="text-sm">
+                          Estimasi selesai: {order.estimated_completion_date}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleOpenFile(order.id, "payment")}
+                          className="px-4 py-2 rounded-full bg-white text-slate-800 text-xs font-semibold"
+                        >
+                          Bukti Pembayaran
+                        </button>
+                        <button
+                          onClick={() => handleOpenFile(order.id, "design")}
+                          className="px-4 py-2 rounded-full bg-slate-900 text-white text-xs font-semibold"
+                        >
+                          File Desain
+                        </button>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-2xl p-4 text-slate-700 flex flex-col justify-between">
+                      <div className="text-xs uppercase text-slate-500">Status</div>
+                      <div className="text-lg font-bold">
+                        {order.status === "pending"
+                          ? "Menunggu Konfirmasi"
+                          : order.status === "processing"
+                          ? "Sedang Diproses"
+                          : "Selesai"}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-2">
+                        {order.created_at
+                          ? new Date(order.created_at).toLocaleDateString("id-ID")
+                          : ""}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+>>>>>>> Stashed changes
         </div>
       </main>
     </div>
   );
-}
-
-function buildInvoiceHtml(data) {
-  const safe = (value) => String(value || "");
-  return `<!doctype html>
-<html lang="id">
-  <head>
-    <meta charset="utf-8" />
-    <title>Invoice ${safe(data.orderNumber)}</title>
-    <style>
-      body{font-family:Arial,Helvetica,sans-serif;margin:32px;color:#0f172a}
-      .card{border:1px solid #e2e8f0;border-radius:12px;padding:24px;max-width:720px;margin:0 auto}
-      h1{font-size:22px;margin:0 0 8px}
-      .meta{font-size:12px;color:#64748b;margin-bottom:16px}
-      .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e2e8f0}
-      .row:last-child{border-bottom:none}
-      .label{font-weight:600}
-      .total{font-size:18px;font-weight:700;margin-top:12px}
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <h1>Invoice Pemesanan</h1>
-      <div class="meta">Nomor: ${safe(data.orderNumber)} | Tanggal: ${new Date(data.date).toLocaleString("id-ID")}</div>
-      <div class="row"><span class="label">Layanan</span><span>${safe(data.layanan)}</span></div>
-      <div class="row"><span class="label">Jenis Bordir</span><span>${safe(data.jenisBordir)}</span></div>
-      <div class="row"><span class="label">Ukuran Bordir</span><span>${safe(data.ukuranBordir)}</span></div>
-      <div class="row"><span class="label">Jumlah</span><span>${safe(data.jumlahPemesanan)}</span></div>
-      <div class="row"><span class="label">Metode Pengiriman</span><span>${safe(data.metodeKirim)}</span></div>
-      <div class="row"><span class="label">Metode Pembayaran</span><span>${safe(data.paymentMethod)}</span></div>
-      <div class="total">Total: Rp ${Number(data.total || 0).toLocaleString("id-ID")}</div>
-    </div>
-  </body>
-</html>`;
 }

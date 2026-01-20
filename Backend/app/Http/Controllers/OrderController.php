@@ -154,6 +154,38 @@ class OrderController extends Controller
     }
 
     /**
+     * Hitung estimasi total harga (tanpa membuat order)
+     */
+    public function estimate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'service_type' => 'required|in:seragam,topi,emblem,jaket,tas',
+            'embroidery_type' => 'required|in:3d,computer',
+            'size_cm' => 'required|numeric|min:0.1',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Data yang diberikan tidak valid.',
+                'errors' => $validator->errors(),
+            ], 400);
+        }
+
+        $data = $validator->validated();
+        $totalPrice = $this->calculateTotalPrice(
+            $data['service_type'],
+            $data['embroidery_type'],
+            $data['size_cm'],
+            $data['quantity']
+        );
+
+        return response()->json([
+            'total_price' => $totalPrice
+        ]);
+    }
+
+    /**
      * Menampilkan detail pesanan
      */
     public function show($id)
@@ -286,6 +318,7 @@ class OrderController extends Controller
         // Validasi input
         $validator = Validator::make($request->all(), [
             'payment_proof' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5120', // max 5MB
+            'payment_method' => 'sometimes|string',
         ]);
 
         if ($validator->fails()) {
@@ -329,10 +362,14 @@ class OrderController extends Controller
                 'status' => 'processing' // Ubah status pesanan ke processing
             ]);
 
+            $allowedMethods = ['transfer', 'cash', 'ewallet'];
+            $methodInput = $request->input('payment_method', 'transfer');
+            $normalizedMethod = in_array($methodInput, $allowedMethods, true) ? $methodInput : 'transfer';
+
             Transaction::updateOrCreate(
                 ['order_id' => $order->id],
                 [
-                    'payment_method' => 'transfer',
+                    'payment_method' => $normalizedMethod,
                     'status' => 'pending',
                     'paid_at' => null
                 ]

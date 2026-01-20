@@ -1,6 +1,10 @@
 // src/pages/Keranjang.jsx
 import React, { useEffect, useMemo, useState } from "react";
+<<<<<<< Updated upstream
 import { useNavigate } from "react-router-dom";
+=======
+import api from "../services/api";
+>>>>>>> Stashed changes
 
 /**
  * Keranjang.jsx (fixed)
@@ -17,6 +21,7 @@ function formatIDR(value) {
 }
 
 export default function Keranjang() {
+<<<<<<< Updated upstream
   const navigate = useNavigate();
   const isLoggedIn = useMemo(() => {
     const token = localStorage.getItem("token");
@@ -106,13 +111,50 @@ export default function Keranjang() {
     }));
     localStorage.setItem("keranjang", JSON.stringify(payload));
   }, [items, isLoggedIn]);
+=======
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+>>>>>>> Stashed changes
 
   const [preview, setPreview] = useState({ open: false, url: "", name: "" });
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCart = async () => {
+      setLoading(true);
+      try {
+        const response = await api.get("/orders", {
+          params: { order_type: "cart" },
+        });
+        if (!isMounted) return;
+        const data = response.data.data || [];
+        const mapped = data.map((order) => ({
+          id: order.id,
+          title: order.service_type,
+          subtitle: order.embroidery_type,
+          qty: order.quantity || 1,
+          pricePerItem: order.total_price || 0,
+          selected: true,
+        }));
+        setItems(mapped);
+      } catch (error) {
+        console.error("Gagal memuat keranjang:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchCart();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // toggle select
   const toggleSelect = (id) =>
     setItems((s) => s.map((it) => (it.id === id ? { ...it, selected: !it.selected } : it)));
 
+<<<<<<< Updated upstream
   const changeQty = (id, delta) =>
     setItems((s) => s.map((it) => (it.id === id ? { ...it, qty: Math.max(1, it.qty + delta) } : it)));
 
@@ -181,8 +223,27 @@ export default function Keranjang() {
     if (!it.fileUrl) {
       alert("Belum ada file ter-upload untuk item ini.");
       return;
+=======
+  const removeItem = async (id) => {
+    try {
+      await api.delete(`/orders/${id}`);
+      setItems((s) => s.filter((it) => it.id !== id));
+    } catch (error) {
+      console.error("Gagal hapus item:", error);
     }
-    setPreview({ open: true, url: it.fileUrl, name: it.title });
+  };
+
+  const openPreview = async (it) => {
+    try {
+      const response = await api.get(`/orders/${it.id}/design-image`, {
+        responseType: "blob",
+      });
+      const fileUrl = URL.createObjectURL(response.data);
+      setPreview({ open: true, url: fileUrl, name: it.title });
+    } catch (error) {
+      alert("Belum ada file desain.");
+>>>>>>> Stashed changes
+    }
   };
 
   const total = useMemo(
@@ -193,6 +254,7 @@ export default function Keranjang() {
   const handleCheckout = () => {
     const selected = items.filter((it) => it.selected);
     if (!selected.length) return alert("Pilih minimal 1 item sebelum pesan.");
+<<<<<<< Updated upstream
     const orderDraft = {
       orderNumber: `CART-${Date.now()}`,
       layanan: selected.map((it) => it.title).join(", "),
@@ -258,6 +320,17 @@ export default function Keranjang() {
     localStorage.removeItem("order_draft");
     setShowPayment(false);
     navigate("/pesanan");
+=======
+    Promise.all(
+      selected.map((item) => api.post(`/orders/${item.id}/checkout-from-cart`))
+    )
+      .then(() => {
+        setItems((prev) => prev.filter((item) => !item.selected));
+      })
+      .catch((error) => {
+        console.error("Gagal checkout:", error);
+      });
+>>>>>>> Stashed changes
   };
 
   return (
@@ -266,7 +339,10 @@ export default function Keranjang() {
         <h1 className="text-2xl sm:text-4xl font-bold text-center text-slate-700 mb-8 sm:mb-10">Keranjang Saya</h1>
 
         <div className="space-y-6">
-          {items.map((it) => (
+          {loading ? (
+            <div className="text-center py-20 text-slate-500">Memuat...</div>
+          ) : (
+            items.map((it) => (
             <div
               key={it.id}
               className="flex flex-col md:flex-row md:items-center gap-4 bg-white rounded-2xl shadow-lg p-5"
@@ -296,14 +372,6 @@ export default function Keranjang() {
                 <p className="text-sm text-slate-400 mt-1">Ukuran: {it.size || "-"}</p>
                 <p className="text-sm text-slate-400 mt-1">Jumlah: {it.qty}</p>
 
-                {/* qty controls for small screens */}
-                <div className="mt-4 md:hidden">
-                  <div className="inline-flex items-center border rounded-full overflow-hidden">
-                    <button onClick={() => changeQty(it.id, -1)} className="px-3 py-1 bg-white text-slate-700">-</button>
-                    <div className="px-4 py-1 bg-white text-slate-800 font-semibold">{it.qty}</div>
-                    <button onClick={() => changeQty(it.id, +1)} className="px-3 py-1 bg-white text-slate-700">+</button>
-                  </div>
-                </div>
               </div>
 
               {/* right content - ensure items vertically centered */}
@@ -318,18 +386,11 @@ export default function Keranjang() {
 
                 {/* price pill */}
                 <div className="w-full sm:min-w-[220px] px-6 py-3 rounded-xl bg-slate-200 text-slate-700 font-semibold text-center sm:text-left">
-                  {formatIDR(it.pricePerItem * it.qty)}
+                  {formatIDR(it.pricePerItem)}
                 </div>
 
                 {/* actions */}
                 <div className="flex items-center gap-2">
-                  <button onClick={() => editItem(it.id)} className="p-2 rounded-full hover:bg-slate-100" aria-label="Edit">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                      <path fillRule="evenodd" d="M2 15.25V18h2.75L15.81 6.94l-2.75-2.75L2 15.25z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-
                   <button onClick={() => removeItem(it.id)} className="p-2 rounded-full hover:bg-slate-100" aria-label="Hapus">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-7 4h10" />
@@ -338,9 +399,10 @@ export default function Keranjang() {
                 </div>
               </div>
             </div>
-          ))}
+          ))
+          )}
 
-          {items.length === 0 && <div className="text-center py-20 text-slate-500">Keranjang kosong.</div>}
+          {!loading && items.length === 0 && <div className="text-center py-20 text-slate-500">Keranjang kosong.</div>}
         </div>
 
         {/* total box */}
@@ -363,7 +425,9 @@ export default function Keranjang() {
               <strong>{preview.name}</strong>
               <button onClick={() => setPreview({ open: false, url: "", name: "" })} className="px-3 py-1 bg-slate-200 rounded">Tutup</button>
             </div>
-            <div className="p-6 text-center text-slate-500">Preview file (implement rendering if you store image/pdf URLs)</div>
+            <div className="p-6">
+              <img src={preview.url} className="w-full max-h-[70vh] object-contain" />
+            </div>
           </div>
         </div>
       )}

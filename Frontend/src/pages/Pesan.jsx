@@ -1,7 +1,11 @@
 // Pesan.jsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+<<<<<<< Updated upstream
 import { MoreHorizontal } from "lucide-react";
+=======
+import api from "../services/api";
+>>>>>>> Stashed changes
 
 // Icons
 import seragam from "../assets/icons/seragam.svg";
@@ -74,6 +78,7 @@ export default function Pesan() {
   // ============================
   // State form
   // ============================
+<<<<<<< Updated upstream
   const [jenisBordir, setJenisBordir] = useState("Bordir Timbul 3D");
   const [ukuranBordir, setUkuranBordir] = useState("20-24 CM");
 
@@ -89,6 +94,16 @@ export default function Pesan() {
   const [qrisImage, setQrisImage] = useState("");
   const [proofFile, setProofFile] = useState(null);
   const [paymentError, setPaymentError] = useState("");
+=======
+  const [jenisBordir, setJenisBordir] = useState("");
+  const [ukuranBordir, setUkuranBordir] = useState("");
+  const [jumlahPemesanan, setJumlahPemesanan] = useState(1);
+  const [totalHarga, setTotalHarga] = useState(0);
+  const [estimating, setEstimating] = useState(false);
+  const [estimateError, setEstimateError] = useState("");
+  const [types, setTypes] = useState([]);
+  const [sizes, setSizes] = useState([]);
+>>>>>>> Stashed changes
 
   // ============================
   // Upload state
@@ -134,27 +149,39 @@ export default function Pesan() {
   }, [preview]);
 
   useEffect(() => {
-    const savedOptions = localStorage.getItem("payment_options");
-    if (savedOptions) {
+    let isMounted = true;
+    const fetchOptions = async () => {
       try {
-        const parsed = JSON.parse(savedOptions);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setPaymentOptions(parsed);
+        const [typeRes, sizeRes] = await Promise.all([
+          api.get("/embroidery-types"),
+          api.get("/embroidery-sizes"),
+        ]);
+        if (!isMounted) return;
+        const typeItems = typeRes.data.data || [];
+        const sizeItems = sizeRes.data.data || [];
+        setTypes(typeItems);
+        setSizes(sizeItems);
+        if (typeItems[0]) {
+          setJenisBordir(typeItems[0].name);
         }
-      } catch {
-        // ignore
+        if (sizeItems[0]) {
+          setUkuranBordir(sizeItems[0].label);
+        }
+      } catch (error) {
+        console.error("Gagal memuat opsi bordir:", error);
       }
-    }
+    };
 
+<<<<<<< Updated upstream
     const savedQris = localStorage.getItem("qris_image");
     if (savedQris) setQrisImage(savedQris);
+=======
+    fetchOptions();
+    return () => {
+      isMounted = false;
+    };
+>>>>>>> Stashed changes
   }, []);
-
-  useEffect(() => {
-    if (!paymentMethod && paymentOptions.length > 0) {
-      setPaymentMethod(paymentOptions[0].value);
-    }
-  }, [paymentMethod, paymentOptions]);
 
   // ============================
   // LOGIN CHECK
@@ -176,6 +203,7 @@ export default function Pesan() {
     return (
       Boolean(jenisBordir) &&
       Boolean(ukuranBordir) &&
+<<<<<<< Updated upstream
       parseInt(jumlahPemesanan || "0", 10) > 0
     );
   }, [jenisBordir, ukuranBordir, jumlahPemesanan]);
@@ -184,11 +212,73 @@ export default function Pesan() {
   const isReadyToOrder = useMemo(() => {
     return isFormValid && Boolean(file);
   }, [isFormValid, file]);
+=======
+      Number(jumlahPemesanan) > 0
+    );
+  }, [jenisBordir, ukuranBordir, jumlahPemesanan]);
+
+  const serviceType = useMemo(() => {
+    const map = {
+      "Bordir Seragam": "seragam",
+      "Bordir Topi": "topi",
+      "Bordir Emblem": "emblem",
+      "Bordir Jaket": "jaket",
+      "Bordir Lainnya": "tas",
+    };
+    return map[layanan] || "seragam";
+  }, [layanan]);
+
+  const embroideryTypeValue = useMemo(() => {
+    return jenisBordir.toLowerCase().includes("3d") ? "3d" : "computer";
+  }, [jenisBordir]);
+
+  const sizeValue = useMemo(() => {
+    const match = ukuranBordir.match(/[\d.]+/);
+    return match ? Number(match[0]) : 0;
+  }, [ukuranBordir]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !isFormValid || sizeValue <= 0) return;
+    let isMounted = true;
+    const estimate = async () => {
+      setEstimating(true);
+      setEstimateError("");
+      try {
+        const response = await api.post("/orders/estimate", {
+          service_type: serviceType,
+          embroidery_type: embroideryTypeValue,
+          size_cm: sizeValue,
+          quantity: jumlahPemesanan,
+        });
+        if (!isMounted) return;
+        setTotalHarga(response.data.total_price || 0);
+      } catch (error) {
+        console.error("Gagal menghitung harga:", error);
+        if (isMounted) {
+          setEstimateError("Gagal menghitung harga. Coba lagi.");
+          setTotalHarga(0);
+        }
+      } finally {
+        if (isMounted) setEstimating(false);
+      }
+    };
+
+    estimate();
+    return () => {
+      isMounted = false;
+    };
+  }, [isLoggedIn, isFormValid, serviceType, embroideryTypeValue, sizeValue, jumlahPemesanan]);
+>>>>>>> Stashed changes
 
   // ============================
   // Aksi tombol
   // ============================
+<<<<<<< Updated upstream
   const handleAddToCart = () => {
+=======
+  const handleAddToCart = async () => {
+    // wajib login
+>>>>>>> Stashed changes
     if (!isLoggedIn) {
       localStorage.removeItem("keranjang");
       localStorage.setItem("redirect_after_login", "/pesan");
@@ -196,6 +286,7 @@ export default function Pesan() {
       return;
     }
 
+<<<<<<< Updated upstream
     const item = {
       id: `CART-${Date.now()}`,
       layanan,
@@ -214,6 +305,33 @@ export default function Pesan() {
   };
 
   const handlePesan = () => {
+=======
+    if (!isFormValid) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("service_type", serviceType);
+      formData.append("embroidery_type", embroideryTypeValue);
+      formData.append("size_cm", sizeValue);
+      formData.append("quantity", jumlahPemesanan);
+      formData.append("shipping_method", "jne");
+      formData.append("order_type", "cart");
+      formData.append("notes", "");
+      if (file) {
+        formData.append("design_image", file);
+      }
+
+      await api.post("/orders", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch (error) {
+      console.error("Gagal menambah ke keranjang:", error);
+    }
+  };
+
+  const handlePesan = async () => {
+    // extra safety (walau tombol sudah disabled ketika belum login)
+>>>>>>> Stashed changes
     if (!isLoggedIn) {
       localStorage.setItem("redirect_after_login", "/pesan");
       navigate("/login");
@@ -223,6 +341,7 @@ export default function Pesan() {
     if (!isFormValid) return;
     if (!file) return; // ✅ FIX: wajib upload file
 
+<<<<<<< Updated upstream
     const orderPayload = {
       orderNumber: `REG-${Date.now()}`,
       layanan,
@@ -235,10 +354,30 @@ export default function Pesan() {
       status: "menunggu",
       createdAt: new Date().toISOString(),
     };
+=======
+    try {
+      const formData = new FormData();
+      formData.append("service_type", serviceType);
+      formData.append("embroidery_type", embroideryTypeValue);
+      formData.append("size_cm", sizeValue);
+      formData.append("quantity", jumlahPemesanan);
+      formData.append("shipping_method", "jne");
+      formData.append("order_type", "now");
+      formData.append("notes", "");
+      if (file) {
+        formData.append("design_image", file);
+      }
+>>>>>>> Stashed changes
 
-    localStorage.setItem("order_draft", JSON.stringify(orderPayload));
-    setPaymentError("");
-    setShowPayment(true);
+      const response = await api.post("/orders", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const order = response.data.order;
+      localStorage.setItem("current_order_id", String(order.id));
+      navigate("/pembayaran");
+    } catch (error) {
+      console.error("Gagal membuat pesanan:", error);
+    }
   };
 
   const layananData = [
@@ -250,6 +389,7 @@ export default function Pesan() {
   ];
 
   const customFont = { fontFamily: '"Noto Sans Telugu", sans-serif' };
+<<<<<<< Updated upstream
   const showQris = paymentMethod === "QRIS";
 
   const handlePaymentFile = (e) => {
@@ -301,6 +441,8 @@ export default function Pesan() {
     navigate("/pesanan");
   };
 
+=======
+>>>>>>> Stashed changes
   return (
     <div className="w-full min-h-screen bg-white">
       {/* ===================== PILIH LAYANAN ===================== */}
@@ -351,6 +493,7 @@ export default function Pesan() {
         <div className="max-w-6xl mx-auto bg-[#F17300] rounded-[28px] p-5 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
           {/* ========== KIRI: Form Input ========== */}
           <div className="space-y-4">
+<<<<<<< Updated upstream
             <SelectField
               label="Jenis Bordir"
               value={jenisBordir}
@@ -369,6 +512,42 @@ export default function Pesan() {
                 <option>20-24 CM</option>
                 <option>10-15 CM</option>
               </SelectField>
+=======
+            <div>
+              <label className="block text-white text-sm mb-2 font-medium">
+                Jenis Bordir
+              </label>
+              <select
+                value={jenisBordir}
+                onChange={(e) => setJenisBordir(e.target.value)}
+                className="w-full px-5 py-3 rounded-2xl bg-white text-gray-700 outline-none"
+              >
+                {types.map((item) => (
+                  <option key={item.id} value={item.name}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-white text-sm mb-2 font-medium">
+                  Ukuran Bordir
+                </label>
+                <select
+                  value={ukuranBordir}
+                  onChange={(e) => setUkuranBordir(e.target.value)}
+                  className="w-full px-5 py-3 rounded-2xl bg-white text-gray-700 outline-none"
+                >
+                  {sizes.map((item) => (
+                    <option key={item.id} value={item.label}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+>>>>>>> Stashed changes
 
               <div>
                 <label className="block text-white text-sm mb-2 font-medium">
@@ -407,7 +586,13 @@ export default function Pesan() {
             <div>
               <input
                 type="text"
-                value="Rp."
+                value={
+                  estimateError
+                    ? estimateError
+                    : estimating
+                    ? "Menghitung..."
+                    : formatRupiah(totalHarga)
+                }
                 readOnly
                 className="w-full px-5 py-3 rounded-2xl bg-white text-gray-700 outline-none"
               />
@@ -505,6 +690,7 @@ export default function Pesan() {
         </div>
       </section>
 
+<<<<<<< Updated upstream
       {/* ===================== MODAL PEMBAYARAN ===================== */}
       {showPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
@@ -602,6 +788,8 @@ export default function Pesan() {
           </div>
         </div>
       )}
+=======
+>>>>>>> Stashed changes
     </div>
   );
 }

@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 export default function Pembayaran() {
   const navigate = useNavigate();
 
   const [loadingQris, setLoadingQris] = useState(true);
-  const [qris, setQris] = useState(null);
+  const [qrisImage, setQrisImage] = useState("");
   const [qrisError, setQrisError] = useState("");
-  const [qrisImageOverride, setQrisImageOverride] = useState("");
-  const [orderDraft, setOrderDraft] = useState(null);
+  const [order, setOrder] = useState(null);
 
   const [paymentMethod, setPaymentMethod] = useState("");
   const [proofFile, setProofFile] = useState(null);
@@ -16,60 +16,53 @@ export default function Pembayaran() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  const [paymentOptions, setPaymentOptions] = useState([
-    { value: "BRI_66400234", label: "BRI NO REK. 66400234" },
-    { value: "QRIS", label: "QRIS" },
-  ]);
+  const [paymentOptions, setPaymentOptions] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
-
-    async function fetchQris() {
+    const fetchSettings = async () => {
       setLoadingQris(true);
       setQrisError("");
       try {
-        const res = await fetch("/api/payments/qris", {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
-        if (!res.ok) throw new Error(`Gagal ambil QRIS (${res.status})`);
-        const data = await res.json();
-        if (!cancelled) setQris(data);
-      } catch (e) {
-        if (!cancelled) setQrisError(e?.message || "Gagal ambil QRIS");
+        const response = await api.get("/payment-settings");
+        if (cancelled) return;
+        setPaymentOptions(response.data.payment_methods || []);
+        setQrisImage(response.data.qris_image_url || "");
+      } catch (error) {
+        if (!cancelled) {
+          setQrisError("Gagal memuat data pembayaran.");
+        }
       } finally {
         if (!cancelled) setLoadingQris(false);
       }
-    }
+    };
 
-    fetchQris();
+    fetchSettings();
     return () => {
       cancelled = true;
     };
   }, []);
 
   useEffect(() => {
-    const savedDraft = localStorage.getItem("order_draft");
-    if (savedDraft) {
-      setOrderDraft(JSON.parse(savedDraft));
-    }
-
-    const savedOptions = localStorage.getItem("payment_options");
-    if (savedOptions) {
+    let cancelled = false;
+    const orderId = localStorage.getItem("current_order_id");
+    if (!orderId) return;
+    const fetchOrder = async () => {
       try {
-        const parsed = JSON.parse(savedOptions);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setPaymentOptions(parsed);
+        const response = await api.get(`/orders/${orderId}`);
+        if (!cancelled) {
+          setOrder(response.data);
         }
-      } catch {
-        // ignore
+      } catch (error) {
+        if (!cancelled) {
+          setSubmitError("Gagal memuat data pesanan.");
+        }
       }
-    }
-
-    const savedQrisImage = localStorage.getItem("qris_image");
-    if (savedQrisImage) {
-      setQrisImageOverride(savedQrisImage);
-    }
+    };
+    fetchOrder();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -77,6 +70,17 @@ export default function Pembayaran() {
       setPaymentMethod(paymentOptions[0].value);
     }
   }, [paymentMethod, paymentOptions]);
+
+  const normalizedMethod = useMemo(() => {
+    const value = (paymentMethod || "").toLowerCase();
+    if (value.includes("qris") || value.includes("ewallet")) {
+      return "ewallet";
+    }
+    if (value.includes("cash")) {
+      return "cash";
+    }
+    return "transfer";
+  }, [paymentMethod]);
 
   function onFileChange(e) {
     const f = e.target.files?.[0] || null;
@@ -93,38 +97,19 @@ export default function Pembayaran() {
 
     setSubmitting(true);
     try {
-      if (!orderDraft) {
+      if (!order) {
         throw new Error("Data pesanan belum ada. Silakan isi form pemesanan.");
       }
 
-      const invoiceData = {
-        orderNumber: orderDraft.orderNumber,
-        date: new Date().toISOString(),
-        layanan: orderDraft.layanan,
-        jenisBordir: orderDraft.jenisBordir,
-        ukuranBordir: orderDraft.ukuranBordir,
-        jumlahPemesanan: orderDraft.jumlahPemesanan,
-        metodeKirim: orderDraft.metodeKirim,
-        paymentMethod,
-        total: orderDraft.total || 0,
-      };
+      const formData = new FormData();
+      formData.append("payment_proof", proofFile);
+      formData.append("payment_method", normalizedMethod);
 
-      localStorage.setItem("invoice_data", JSON.stringify(invoiceData));
-      localStorage.setItem(
-        "invoice_file_name",
-        `Invoice-${orderDraft.orderNumber}.html`
-      );
+      await api.post(`/orders/${order.id}/upload-payment-proof`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-      localStorage.setItem(
-        "pesanan_aktif",
-        JSON.stringify({
-          ...orderDraft,
-          paymentMethod,
-          status: "menunggu",
-        })
-      );
-      localStorage.removeItem("order_draft");
-
+      localStorage.removeItem("current_order_id");
       navigate("/pesanan");
     } catch (e) {
       setSubmitError(e?.message || "Terjadi kesalahan saat mengirim pesanan.");
@@ -134,7 +119,7 @@ export default function Pembayaran() {
   }
 
   const showQris = paymentMethod === "QRIS";
-  const totalToPay = orderDraft?.total || 0;
+  const totalToPay = order?.total_price || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-6">
@@ -255,29 +240,28 @@ export default function Pembayaran() {
                     <div className="text-gray-700 font-semibold mb-2">QRIS</div>
                     <div className="text-xs text-gray-500 mb-4 text-center">
                       Scan untuk pembayaran
-                      {qris?.merchantName ? ` · ${qris.merchantName}` : ""}
                     </div>
 
                     <div className="rounded-2xl border border-gray-200 p-3 bg-white">
-                      <img
-                        src={qrisImageOverride || qris?.imageUrl}
-                        alt="QRIS"
-                        className="w-52 h-52 object-contain"
-                      />
+                      {qrisImage ? (
+                        <img
+                          src={qrisImage}
+                          alt="QRIS"
+                          className="w-52 h-52 object-contain"
+                        />
+                      ) : (
+                        <div className="w-52 h-52 flex items-center justify-center text-sm text-gray-500">
+                          QRIS belum diatur.
+                        </div>
+                      )}
                     </div>
 
-                    {qris?.amount ? (
+                    {totalToPay ? (
                       <div className="mt-4 text-sm text-gray-700">
                         Total:{" "}
                         <span className="font-semibold">
-                          {formatRupiah(qris.amount)}
+                          {formatRupiah(totalToPay)}
                         </span>
-                      </div>
-                    ) : null}
-
-                    {qris?.reference ? (
-                      <div className="mt-1 text-xs text-gray-500">
-                        Ref: {qris.reference}
                       </div>
                     ) : null}
                   </>

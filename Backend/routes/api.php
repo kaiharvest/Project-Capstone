@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->put('/user/profile', [AuthController::class, 
 // Routes for order management
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('orders', OrderController::class);
+    Route::post('/orders/estimate', [OrderController::class, 'estimate']);
     Route::post('/orders/{id}/checkout-from-cart', [OrderController::class, 'checkoutFromCart']);
     Route::post('/orders/{id}/upload-proof', [OrderController::class, 'uploadProof']);
     Route::get('/orders/{id}/proof', [OrderController::class, 'showProof']);
@@ -53,6 +54,9 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'verifyOtpAndResetPassword']);
 Route::get('/company-profile', [CompanyProfileController::class, 'show']);
 Route::get('/portfolio-photos', [PortfolioPhotoController::class, 'index']);
+Route::get('/payment-settings', [SettingsController::class, 'paymentSettingsPublic']);
+Route::get('/embroidery-types', [EmbroideryTypeController::class, 'index']);
+Route::get('/embroidery-sizes', [EmbroiderySizeController::class, 'index']);
 
 Route::middleware(['auth:sanctum','admin'])->prefix('admin')->group(function(){
 Route::get('/settings', [SettingsController::class,'show']);

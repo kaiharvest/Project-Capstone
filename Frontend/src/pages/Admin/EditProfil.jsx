@@ -27,6 +27,8 @@ const EditProfil = () => {
   const [newMethodLabel, setNewMethodLabel] = useState('');
   const [newMethodValue, setNewMethodValue] = useState('');
   const [qrisImagePreview, setQrisImagePreview] = useState('');
+  const [qrisFile, setQrisFile] = useState(null);
+  const [savingPayments, setSavingPayments] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -54,22 +56,20 @@ const EditProfil = () => {
   }, []);
 
   useEffect(() => {
-    const savedOptions = localStorage.getItem('payment_options');
-    if (savedOptions) {
+    const fetchPaymentSettings = async () => {
       try {
-        const parsed = JSON.parse(savedOptions);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setPaymentOptions(parsed);
+        const response = await api.get('/payment-settings');
+        const methods = response.data.payment_methods || [];
+        if (methods.length > 0) {
+          setPaymentOptions(methods);
         }
-      } catch {
-        // ignore
+        setQrisImagePreview(response.data.qris_image_url || '');
+      } catch (error) {
+        console.error('Gagal memuat metode pembayaran:', error);
       }
-    }
+    };
 
-    const savedQris = localStorage.getItem('qris_image');
-    if (savedQris) {
-      setQrisImagePreview(savedQris);
-    }
+    fetchPaymentSettings();
   }, []);
 
   const storageBaseUrl = useMemo(() => {
@@ -205,7 +205,6 @@ const EditProfil = () => {
     const value = newMethodValue.trim() || newMethodLabel.trim();
     const next = [...paymentOptions, { value, label: newMethodLabel.trim() }];
     setPaymentOptions(next);
-    localStorage.setItem('payment_options', JSON.stringify(next));
     setNewMethodLabel('');
     setNewMethodValue('');
   };
@@ -213,19 +212,59 @@ const EditProfil = () => {
   const handleRemoveMethod = (value) => {
     const next = paymentOptions.filter((opt) => opt.value !== value);
     setPaymentOptions(next);
-    localStorage.setItem('payment_options', JSON.stringify(next));
   };
 
-  const handleQrisImageChange = (event) => {
+  const refreshPaymentSettings = async () => {
+    try {
+      const response = await api.get('/payment-settings');
+      const methods = response.data.payment_methods || [];
+      if (methods.length > 0) {
+        setPaymentOptions(methods);
+      }
+      setQrisImagePreview(response.data.qris_image_url || '');
+    } catch (error) {
+      console.error('Gagal memuat metode pembayaran:', error);
+    }
+  };
+
+  const handleQrisImageChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    setQrisFile(file);
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result;
       setQrisImagePreview(result);
-      localStorage.setItem('qris_image', result);
     };
     reader.readAsDataURL(file);
+
+    try {
+      const formData = new FormData();
+      formData.append('qris_image', file);
+      await api.put('/admin/settings', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      await refreshPaymentSettings();
+      setQrisFile(null);
+    } catch (error) {
+      console.error('Gagal upload QRIS:', error);
+      alert('Gagal upload QRIS.');
+    }
+  };
+
+  const handleSavePaymentSettings = async () => {
+    setSavingPayments(true);
+    try {
+      await api.put('/admin/settings', {
+        payment_methods: paymentOptions,
+      });
+      await refreshPaymentSettings();
+    } catch (error) {
+      console.error('Gagal menyimpan metode pembayaran:', error);
+      alert('Gagal menyimpan metode pembayaran.');
+    } finally {
+      setSavingPayments(false);
+    }
   };
 
   return (
@@ -423,6 +462,14 @@ const EditProfil = () => {
           className="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800"
         >
           Tambah Metode
+        </button>
+
+        <button
+          onClick={handleSavePaymentSettings}
+          className="rounded-xl bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 ml-3"
+          disabled={savingPayments}
+        >
+          {savingPayments ? 'Menyimpan...' : 'Simpan Metode'}
         </button>
 
         <div className="mt-4 flex flex-wrap gap-2">
