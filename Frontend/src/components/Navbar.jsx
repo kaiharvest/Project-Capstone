@@ -2,16 +2,11 @@ import React, { useState, useEffect } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import logo from "../assets/logo.png";
 import cartIcon from "../assets/icons/shop.svg";
-// import userIcon from "../assets/icons/user.svg"; // Tidak lagi diperlukan jika menggunakan teks "Login"
+import { User as UserIcon } from "lucide-react"; // Ikon user sebagai pengganti avatar
 
 export default function Navbar() {
   const activeClass = "text-white";
   const normalClass = "hover:text-white";
-
-  // Kita tidak lagi butuh userActiveClass dan userNormalClass karena kita akan menggunakan button teks
-  // khusus icon user (biar keliatan nyala)
-  // const userActiveClass = "bg-orange-500 p-2 rounded-full";
-  // const userNormalClass = "p-2 rounded-full hover:opacity-90";
 
   const { pathname } = useLocation();
 
@@ -121,14 +116,16 @@ export default function Navbar() {
           {loggedInUser ? (
             <Link
               to="/akun"
-              className="text-white bg-orange-500 hover:bg-orange-600 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200"
+              className="flex items-center justify-center text-white bg-[#010E31] hover:bg-[#0B1535] rounded-full w-11 h-11 text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
             >
-              {loggedInUser.name}
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-inner">
+                <UserIcon className="w-5 h-5 text-white" />
+              </div>
             </Link>
           ) : (
             <Link
               to="/login"
-              className="bg-[#3E78A9] text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#326188] transition-colors duration-200"
+              className="bg-[#3E78A9] text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#326188] transition-colors duration-200 shadow-md hover:shadow-lg"
             >
               Login
             </Link>
@@ -163,15 +160,17 @@ export default function Navbar() {
                 <Link
                   to="/akun"
                   onClick={() => setIsMenuOpen(false)}
-                  className="text-white bg-orange-500 hover:bg-orange-600 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200"
+                  className="flex items-center justify-center text-white bg-[#010E31] hover:bg-[#0B1535] rounded-full w-11 h-11 text-sm font-semibold transition-all duration-200"
                 >
-                  {loggedInUser.name}
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-inner">
+                    <UserIcon className="w-5 h-5 text-white" />
+                  </div>
                 </Link>
               ) : (
                 <Link
                   to="/login"
                   onClick={() => setIsMenuOpen(false)}
-                  className="bg-[#3E78A9] text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#326188] transition-colors duration-200"
+                  className="bg-[#3E78A9] text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#326188] transition-colors duration-200 shadow-md hover:shadow-lg"
                 >
                   Login
                 </Link>
