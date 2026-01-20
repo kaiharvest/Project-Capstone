@@ -3,6 +3,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { jsPDF } from "jspdf";
 import logo from "../assets/logo.png"; // <- ubah path kalau logo kamu beda
 
 const formatRupiah = (n) =>
@@ -65,39 +66,24 @@ export default function Invoice() {
     return () => controller.abort();
   }, [order, orderId]);
 
-  // Dummy data (kalau belum ada API) — hapus kalau sudah pakai backend
+  // Dummy data (kalau belum ada API) - hapus kalau sudah pakai backend
   const demoOrder = useMemo(
     () => ({
       orderNumber: orderId || "20252812REG11097554333333",
       createdAt: new Date().toISOString(),
-      customer: {
-        name: "Lisa",
-        email: "lisa@email.com",
-        phone: "08xxxxxxxxxx",
-      },
-      items: [
-        { name: "Bordir Logo", qty: 2, price: 75000 },
-        { name: "Bordir Nama", qty: 1, price: 25000 },
-      ],
-      shippingLabel: "Gratis Ongkir",
-      shippingCost: 0,
+      layanan: "Bordir Seragam",
+      jenisBordir: "Bordir Timbul 3D",
+      ukuranBordir: "20-24 CM",
+      jumlahPemesanan: 10,
       paymentMethod: "BRI NO REK. 66400234",
-      paymentStatus: "TERBAYAR",
+      total: 250000,
     }),
     [orderId]
   );
 
   const invoiceData = order ?? demoOrder;
 
-  const items = Array.isArray(invoiceData.items) ? invoiceData.items : [];
-
-  const totalItems = items.reduce(
-    (acc, it) => acc + Number(it.qty || 0) * Number(it.price || 0),
-    0
-  );
-
-  const shippingCost = Number(invoiceData.shippingCost ?? 0);
-  const total = totalItems + shippingCost;
+  const total = Number(invoiceData.total ?? 0);
 
   // Invoice No ambil dari nomor pemesanan
   const invoiceNo =
@@ -107,23 +93,54 @@ export default function Invoice() {
     orderId ||
     "-";
 
-  const customer = invoiceData.customer || {};
-  const customerName = customer.name || invoiceData.customerName || "-";
-  const customerEmail = customer.email || invoiceData.customerEmail || "-";
-  const customerPhone = customer.phone || invoiceData.customerPhone || "-";
-
   const paymentMethod =
     invoiceData.paymentMethod ||
     invoiceData.method ||
     invoiceData.payment?.method ||
     "-";
 
-  const paymentStatus =
-    invoiceData.paymentStatus ||
-    invoiceData.payment?.status ||
-    "TERBAYAR";
-
   const createdAt = invoiceData.createdAt || new Date().toISOString();
+
+  const handleDownloadPdf = () => {
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const left = 56;
+    let top = 64;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("INVOICE", left, top);
+
+    top += 24;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text(`Invoice No: ${invoiceNo || "-"}`, left, top);
+    top += 16;
+    doc.text(`Tanggal: ${formatDateID(createdAt)}`, left, top);
+
+    top += 24;
+    doc.setFont("helvetica", "bold");
+    doc.text("Detail Pesanan", left, top);
+    top += 16;
+
+    doc.setFont("helvetica", "normal");
+    const rows = [
+      ["Jenis Produk", invoiceData.layanan || "-"],
+      ["Jenis Bordir", invoiceData.jenisBordir || "-"],
+      ["Ukuran Bordir", invoiceData.ukuranBordir || "-"],
+      ["Jumlah", String(invoiceData.jumlahPemesanan || "-")],
+      ["Metode Pembayaran", paymentMethod || "-"],
+      ["Total", formatRupiah(total)],
+    ];
+
+    rows.forEach(([label, value]) => {
+      doc.text(`${label}:`, left, top);
+      doc.text(String(value), left + 160, top);
+      top += 16;
+    });
+
+    const filename = `Invoice-${invoiceNo || "pesanan"}.pdf`;
+    doc.save(filename);
+  };
 
   return (
     <div style={styles.page}>
@@ -134,13 +151,13 @@ export default function Invoice() {
         <button style={styles.btnSecondary} onClick={() => navigate(-1)}>
           Kembali
         </button>
-        <button style={styles.btnPrimary} onClick={() => window.print()}>
-          Unduh / Cetak Invoice
+        <button style={styles.btnPrimary} onClick={handleDownloadPdf}>
+          Unduh PDF
         </button>
       </div>
 
       {loading ? (
-        <div style={styles.card}>Memuat invoice…</div>
+        <div style={styles.card}>Memuat invoice...</div>
       ) : error ? (
         <div style={styles.card}>
           <div style={{ marginBottom: 10, color: "#b00020" }}>{error}</div>
@@ -180,118 +197,31 @@ export default function Invoice() {
 
           <div style={styles.hr} />
 
-          {/* Customer & Payment */}
-          <div style={styles.grid2}>
-            <div style={styles.block}>
-              <div style={styles.blockTitle}>Data Pelanggan</div>
-              <div style={styles.kv}>
-                <span style={styles.k}>Nama</span>
-                <span style={styles.v}>{customerName}</span>
-              </div>
-              <div style={styles.kv}>
-                <span style={styles.k}>Email</span>
-                <span style={styles.v}>{customerEmail}</span>
-              </div>
-              <div style={styles.kv}>
-                <span style={styles.k}>Telepon</span>
-                <span style={styles.v}>{customerPhone}</span>
-              </div>
+          <div style={styles.simpleGrid}>
+            <div style={styles.simpleRow}>
+              <span style={styles.k}>Jenis Produk</span>
+              <span style={styles.v}>{invoiceData.layanan || "-"}</span>
             </div>
-
-            <div style={styles.block}>
-              <div style={styles.blockTitle}>Pembayaran</div>
-              <div style={styles.kv}>
-                <span style={styles.k}>Metode Pembayaran</span>
-                <span style={styles.v}>{paymentMethod}</span>
-              </div>
-              <div style={styles.kv}>
-                <span style={styles.k}>Status Pembayaran</span>
-                <span style={{ ...styles.v, ...styles.paidBadge }}>
-                  {String(paymentStatus).toUpperCase()}
-                </span>
-              </div>
-              <div style={styles.kv}>
-                <span style={styles.k}>Ongkir</span>
-                <span style={styles.v}>
-                  {invoiceData.shippingLabel || "Gratis Ongkir"}
-                </span>
-              </div>
+            <div style={styles.simpleRow}>
+              <span style={styles.k}>Jenis Bordir</span>
+              <span style={styles.v}>{invoiceData.jenisBordir || "-"}</span>
             </div>
-          </div>
-
-          <div style={styles.hr} />
-
-          {/* Items table */}
-          <div style={styles.tableWrap}>
-            <div style={styles.tableTitle}>Detail Item</div>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th style={{ ...styles.th, width: "44%" }}>Nama Produk</th>
-                  <th style={{ ...styles.th, width: "12%", textAlign: "center" }}>
-                    Qty
-                  </th>
-                  <th style={{ ...styles.th, width: "22%", textAlign: "right" }}>
-                    Harga
-                  </th>
-                  <th style={{ ...styles.th, width: "22%", textAlign: "right" }}>
-                    Subtotal
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.length === 0 ? (
-                  <tr>
-                    <td style={styles.td} colSpan={4}>
-                      Tidak ada item.
-                    </td>
-                  </tr>
-                ) : (
-                  items.map((it, idx) => {
-                    const qty = Number(it.qty || 0);
-                    const price = Number(it.price || 0);
-                    const subtotal = qty * price;
-                    return (
-                      <tr key={idx}>
-                        <td style={styles.td}>{it.name || "-"}</td>
-                        <td style={{ ...styles.td, textAlign: "center" }}>
-                          {qty}
-                        </td>
-                        <td style={{ ...styles.td, textAlign: "right" }}>
-                          {formatRupiah(price)}
-                        </td>
-                        <td style={{ ...styles.td, textAlign: "right" }}>
-                          {formatRupiah(subtotal)}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Totals */}
-          <div style={styles.totals}>
-            <div style={styles.totalRow}>
-              <span style={styles.totalLabel}>Subtotal</span>
-              <span style={styles.totalValue}>{formatRupiah(totalItems)}</span>
+            <div style={styles.simpleRow}>
+              <span style={styles.k}>Ukuran Bordir</span>
+              <span style={styles.v}>{invoiceData.ukuranBordir || "-"}</span>
             </div>
-            <div style={styles.totalRow}>
-              <span style={styles.totalLabel}>Ongkir</span>
-              <span style={styles.totalValue}>
-                {shippingCost === 0 ? "Gratis Ongkir" : formatRupiah(shippingCost)}
-              </span>
+            <div style={styles.simpleRow}>
+              <span style={styles.k}>Jumlah</span>
+              <span style={styles.v}>{invoiceData.jumlahPemesanan || "-"}</span>
             </div>
-            <div style={styles.hrThin} />
-            <div style={styles.totalRowBig}>
+            <div style={styles.simpleRow}>
+              <span style={styles.k}>Metode Pembayaran</span>
+              <span style={styles.v}>{paymentMethod}</span>
+            </div>
+            <div style={styles.simpleRowTotal}>
               <span style={styles.totalLabelBig}>Total</span>
               <span style={styles.totalValueBig}>{formatRupiah(total)}</span>
             </div>
-          </div>
-
-          <div style={styles.footerNote}>
-            Terima kasih telah memesan di JA Bordir.
           </div>
         </div>
       )}
@@ -371,6 +301,28 @@ const styles = {
   },
   hr: { height: 1, background: "#eef0f6", margin: "16px 0" },
   hrThin: { height: 1, background: "#eef0f6", margin: "10px 0" },
+  simpleGrid: {
+    border: "1px solid #eef0f6",
+    borderRadius: 14,
+    padding: 16,
+    background: "#fbfcff",
+    display: "grid",
+    gap: 10,
+  },
+  simpleRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "6px 0",
+    fontSize: 13,
+  },
+  simpleRowTotal: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingTop: 10,
+    borderTop: "1px solid #eef0f6",
+  },
   grid2: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",

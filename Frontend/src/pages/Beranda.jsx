@@ -63,7 +63,7 @@ export default function Beranda() {
   return (
     <>
       {/* ================= HERO SECTION ================= */}
-      <section className="relative w-full h-[320px] sm:h-[400px] md:h-[520px] overflow-hidden">
+      <section className="relative w-full -mt-px h-[320px] sm:h-[400px] md:h-[520px] overflow-hidden bg-[#010E31]">
         <img
           src={images[index]}
           alt="Beranda JA Bordir"
@@ -235,7 +235,7 @@ export default function Beranda() {
             state={{ scrollToTop: true }}
             className="bg-[#3E7CB1] hover:bg-[#356a99] text-white font-semibold px-8 sm:px-10 py-2.5 sm:py-3 rounded-lg shadow-lg transition"
           >
-            Lihat Lengkap
+            Lihat Selengkapnya
           </Link>
         </div>
       </section>

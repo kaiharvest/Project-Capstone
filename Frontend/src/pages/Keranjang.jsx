@@ -1,5 +1,6 @@
 // src/pages/Keranjang.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Keranjang.jsx (fixed)
@@ -16,26 +17,95 @@ function formatIDR(value) {
 }
 
 export default function Keranjang() {
-  const [items, setItems] = useState([
-    {
-      id: 1,
-      title: "Bordir Seragam",
-      subtitle: "Bordir Timbul",
-      qty: 20,
-      pricePerItem: 1000000,
-      fileUrl: "", // file url or data url
-      selected: true,
-    },
-    {
-      id: 2,
-      title: "Bordir Emblem",
-      subtitle: "Bordir Timbul",
-      qty: 20,
-      pricePerItem: 1000000,
-      fileUrl: "",
-      selected: false,
-    },
+  const navigate = useNavigate();
+  const isLoggedIn = useMemo(() => {
+    const token = localStorage.getItem("token");
+    const accessToken = localStorage.getItem("access_token");
+    const user = localStorage.getItem("user");
+    return Boolean(token || accessToken || user);
+  }, []);
+
+  const [items, setItems] = useState([]);
+  const [editState, setEditState] = useState({
+    open: false,
+    itemId: null,
+    title: "",
+    subtitle: "",
+    size: "",
+    qty: "1",
+    fileUrl: "",
+    fileName: "",
+  });
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentOptions, setPaymentOptions] = useState([
+    { value: "BRI_66400234", label: "BRI NO REK. 66400234" },
+    { value: "QRIS", label: "QRIS" },
   ]);
+  const [qrisImage, setQrisImage] = useState("");
+  const [proofFile, setProofFile] = useState(null);
+  const [paymentError, setPaymentError] = useState("");
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setItems([]);
+      return;
+    }
+
+    const stored = JSON.parse(localStorage.getItem("keranjang")) || [];
+    const mapped = stored.map((it) => ({
+      id: it.id || `CART-${Date.now()}`,
+      title: it.layanan || "Produk",
+      subtitle: it.jenisBordir || "",
+      size: it.ukuranBordir || "",
+      qty: Number(it.jumlahPemesanan) || 1,
+      pricePerItem: Number(it.pricePerItem) || 0,
+      fileUrl: it.designPreviewUrl || "",
+      fileName: it.designFileName || "",
+      selected: false,
+    }));
+    setItems(mapped);
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    const savedOptions = localStorage.getItem("payment_options");
+    if (savedOptions) {
+      try {
+        const parsed = JSON.parse(savedOptions);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPaymentOptions(parsed);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const savedQris = localStorage.getItem("qris_image");
+    if (savedQris) {
+      setQrisImage(savedQris);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!paymentMethod && paymentOptions.length > 0) {
+      setPaymentMethod(paymentOptions[0].value);
+    }
+  }, [paymentMethod, paymentOptions]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const payload = items.map((it) => ({
+      id: it.id,
+      layanan: it.title,
+      jenisBordir: it.subtitle,
+      ukuranBordir: it.size || "",
+      jumlahPemesanan: it.qty,
+      designPreviewUrl: it.fileUrl || "",
+      designFileName: it.fileName || "",
+      pricePerItem: it.pricePerItem || 0,
+    }));
+    localStorage.setItem("keranjang", JSON.stringify(payload));
+  }, [items, isLoggedIn]);
 
   const [preview, setPreview] = useState({ open: false, url: "", name: "" });
 
@@ -47,7 +117,65 @@ export default function Keranjang() {
     setItems((s) => s.map((it) => (it.id === id ? { ...it, qty: Math.max(1, it.qty + delta) } : it)));
 
   const removeItem = (id) => setItems((s) => s.filter((it) => it.id !== id));
-  const editItem = (id) => alert("Edit item " + id + " (implement edit flow)");
+  const editItem = (id) => {
+    const target = items.find((it) => it.id === id);
+    if (!target) return;
+    setEditState({
+      open: true,
+      itemId: target.id,
+      title: target.title,
+      subtitle: target.subtitle,
+      size: target.size || "",
+      qty: String(target.qty || 1),
+      fileUrl: target.fileUrl || "",
+      fileName: target.fileName || "",
+    });
+  };
+
+  const closeEdit = () => {
+    setEditState({
+      open: false,
+      itemId: null,
+      title: "",
+      subtitle: "",
+      size: "",
+      qty: "1",
+      fileUrl: "",
+      fileName: "",
+    });
+  };
+
+  const handleEditFile = (event) => {
+    const selected = event.target.files?.[0];
+    if (!selected) return;
+    const nextUrl = URL.createObjectURL(selected);
+    if (editState.fileUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(editState.fileUrl);
+    }
+    setEditState((prev) => ({
+      ...prev,
+      fileUrl: nextUrl,
+      fileName: selected.name,
+    }));
+  };
+
+  const saveEdit = () => {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === editState.itemId
+          ? {
+              ...it,
+              subtitle: editState.subtitle,
+              size: editState.size,
+              qty: Math.max(1, Number(editState.qty) || 1),
+              fileUrl: editState.fileUrl,
+              fileName: editState.fileName,
+            }
+          : it
+      )
+    );
+    closeEdit();
+  };
 
   const openPreview = (it) => {
     if (!it.fileUrl) {
@@ -65,7 +193,71 @@ export default function Keranjang() {
   const handleCheckout = () => {
     const selected = items.filter((it) => it.selected);
     if (!selected.length) return alert("Pilih minimal 1 item sebelum pesan.");
-    alert("Checkout " + selected.length + " item(s). (Implement API)");
+    const orderDraft = {
+      orderNumber: `CART-${Date.now()}`,
+      layanan: selected.map((it) => it.title).join(", "),
+      jenisBordir: selected.map((it) => it.subtitle || "-").join(", "),
+      ukuranBordir: selected.map((it) => it.size || "-").join(", "),
+      jumlahPemesanan: selected.reduce((sum, it) => sum + (Number(it.qty) || 0), 0),
+      items: selected,
+      total,
+      status: "menunggu",
+      createdAt: new Date().toISOString(),
+    };
+    localStorage.setItem("order_draft", JSON.stringify(orderDraft));
+    setPaymentError("");
+    setShowPayment(true);
+  };
+
+  const showQris = paymentMethod === "QRIS";
+
+  const handlePaymentFile = (event) => {
+    const f = event.target.files?.[0] || null;
+    setProofFile(f);
+  };
+
+  const handlePaymentSubmit = () => {
+    setPaymentError("");
+
+    if (!proofFile) {
+      setPaymentError("Mohon unggah bukti transfer terlebih dahulu.");
+      return;
+    }
+
+    const savedDraft = localStorage.getItem("order_draft");
+    if (!savedDraft) {
+      setPaymentError("Data pesanan belum ada. Silakan pilih item.");
+      return;
+    }
+
+    const orderDraft = JSON.parse(savedDraft);
+    const invoiceData = {
+      orderNumber: orderDraft.orderNumber,
+      date: new Date().toISOString(),
+      layanan: orderDraft.layanan,
+      jenisBordir: orderDraft.jenisBordir,
+      ukuranBordir: orderDraft.ukuranBordir,
+      jumlahPemesanan: orderDraft.jumlahPemesanan,
+      paymentMethod,
+      total: orderDraft.total || 0,
+    };
+
+    localStorage.setItem("invoice_data", JSON.stringify(invoiceData));
+    localStorage.setItem(
+      "invoice_file_name",
+      `Invoice-${orderDraft.orderNumber}.html`
+    );
+    localStorage.setItem(
+      "pesanan_aktif",
+      JSON.stringify({
+        ...orderDraft,
+        paymentMethod,
+        status: "menunggu",
+      })
+    );
+    localStorage.removeItem("order_draft");
+    setShowPayment(false);
+    navigate("/pesanan");
   };
 
   return (
@@ -100,7 +292,9 @@ export default function Keranjang() {
               {/* left content */}
               <div className="flex-1">
                 <h2 className="text-lg font-semibold text-slate-800">{it.title}</h2>
-                <p className="text-sm text-slate-400 mt-1">{it.subtitle}</p>
+                <p className="text-sm text-slate-400 mt-1">Jenis: {it.subtitle || "-"}</p>
+                <p className="text-sm text-slate-400 mt-1">Ukuran: {it.size || "-"}</p>
+                <p className="text-sm text-slate-400 mt-1">Jumlah: {it.qty}</p>
 
                 {/* qty controls for small screens */}
                 <div className="mt-4 md:hidden">
@@ -170,6 +364,200 @@ export default function Keranjang() {
               <button onClick={() => setPreview({ open: false, url: "", name: "" })} className="px-3 py-1 bg-slate-200 rounded">Tutup</button>
             </div>
             <div className="p-6 text-center text-slate-500">Preview file (implement rendering if you store image/pdf URLs)</div>
+          </div>
+        </div>
+      )}
+
+      {showPayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-5xl rounded-3xl bg-orange-500 p-8 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white text-lg font-semibold">Pembayaran</h3>
+              <button
+                onClick={() => setShowPayment(false)}
+                className="text-white/90 hover:text-white"
+                aria-label="Tutup"
+              >
+                X
+              </button>
+            </div>
+
+            <div
+              className={`grid grid-cols-1 ${showQris ? "md:grid-cols-3" : "md:grid-cols-2"} gap-6`}
+            >
+              <div className="md:col-span-2 bg-white rounded-2xl p-4 md:p-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Metode Pembayaran
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                  >
+                    {paymentOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-500">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="opacity-80"
+                    >
+                      <path
+                        d="M6 9l6 6 6-6"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bukti Transfer
+                  </label>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-gray-500 truncate">
+                      {proofFile ? proofFile.name : "Unggah Bukti Transfer"}
+                    </div>
+                    <label className="shrink-0 cursor-pointer rounded-xl bg-sky-200 px-4 py-2 text-sm text-sky-900 font-semibold hover:bg-sky-300 active:scale-[0.99]">
+                      Pilih File
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        className="hidden"
+                        onChange={handlePaymentFile}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {paymentError ? (
+                  <div className="mt-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                    {paymentError}
+                  </div>
+                ) : null}
+
+                <button
+                  onClick={handlePaymentSubmit}
+                  className="mt-5 w-full rounded-2xl bg-green-500 py-4 font-bold text-white hover:bg-green-600"
+                >
+                  Pesan
+                </button>
+                <div className="mt-3 text-sm text-gray-700 font-semibold">
+                  Total yang harus dibayar:{" "}
+                  <span className="text-gray-900">{formatIDR(total)}</span>
+                </div>
+              </div>
+
+              {showQris && (
+                <div className="bg-white rounded-2xl p-5 flex flex-col items-center justify-center">
+                  <div className="text-gray-700 font-semibold mb-2">QRIS</div>
+                  <div className="text-xs text-gray-500 mb-4 text-center">
+                    Scan untuk pembayaran
+                  </div>
+                  <div className="rounded-2xl border border-gray-200 p-3 bg-white">
+                    <img
+                      src={qrisImage}
+                      alt="QRIS"
+                      className="w-44 h-44 object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editState.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <strong>Edit Keranjang</strong>
+              <button onClick={closeEdit} className="px-3 py-1 bg-slate-200 rounded">
+                Tutup
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Jenis Bordir</label>
+                <select
+                  value={editState.subtitle}
+                  onChange={(e) => setEditState((prev) => ({ ...prev, subtitle: e.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700"
+                >
+                  <option value="Bordir Timbul 3D">Bordir Timbul 3D</option>
+                  <option value="Bordir Komputer">Bordir Komputer</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Ukuran Bordir</label>
+                  <select
+                    value={editState.size}
+                    onChange={(e) => setEditState((prev) => ({ ...prev, size: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700"
+                  >
+                    <option value="20-24 CM">20-24 CM</option>
+                    <option value="10-15 CM">10-15 CM</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Jumlah Pemesanan</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editState.qty}
+                    onChange={(e) =>
+                      setEditState((prev) => ({
+                        ...prev,
+                        qty: e.target.value,
+                      }))
+                    }
+                    onBlur={() =>
+                      setEditState((prev) => ({
+                        ...prev,
+                        qty: String(Math.max(1, Number(prev.qty) || 1)),
+                      }))
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">File Desain</label>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-slate-500 truncate">
+                    {editState.fileName || "Belum ada file"}
+                  </div>
+                  <label className="shrink-0 cursor-pointer rounded-xl bg-sky-200 px-4 py-2 text-sm text-sky-900 font-semibold hover:bg-sky-300 active:scale-[0.99]">
+                    Ganti File
+                    <input type="file" accept="image/*,.pdf" className="hidden" onChange={handleEditFile} />
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button onClick={closeEdit} className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700">
+                  Batal
+                </button>
+                <button onClick={saveEdit} className="px-5 py-2 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600">
+                  Simpan
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

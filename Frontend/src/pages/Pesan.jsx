@@ -1,13 +1,61 @@
+// Pesan.jsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { MoreHorizontal } from "lucide-react";
 
 // Icons
 import seragam from "../assets/icons/seragam.svg";
 import topi from "../assets/icons/topi.svg";
 import emblem from "../assets/icons/emblem.svg";
 import jaket from "../assets/icons/jaket.svg";
-import tas from "../assets/icons/tas.svg";
 import dummyImg from "../assets/dummy/profil.png";
+
+/**
+ * Reusable Select (dropdown) with custom arrow
+ */
+function SelectField({
+  label,
+  labelClassName = "block text-white text-sm mb-2 font-medium",
+  value,
+  onChange,
+  children,
+  selectClassName = "w-full px-5 py-3 pr-12 rounded-2xl bg-white text-gray-700 outline-none",
+  arrowClassName = "pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-500",
+}) {
+  return (
+    <div>
+      {label ? <label className={labelClassName}>{label}</label> : null}
+
+      <div className="relative">
+        <select
+          value={value}
+          onChange={onChange}
+          className={`${selectClassName} appearance-none`}
+        >
+          {children}
+        </select>
+
+        <div className={arrowClassName} aria-hidden="true">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="opacity-80"
+          >
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Pesan() {
   const navigate = useNavigate();
@@ -16,7 +64,7 @@ export default function Pesan() {
   // ============================
   // Dummy produk (NANTI DIGANTI BACKEND)
   // ============================
-  const [produk, setProduk] = useState({
+  const [produk] = useState({
     gambar: dummyImg,
     nama: "Nama Produk Dummy",
     harga: "Rp 0",
@@ -24,12 +72,14 @@ export default function Pesan() {
   });
 
   // ============================
-  // State form (biar bisa dikirim ke halaman pesanan)
+  // State form
   // ============================
   const [jenisBordir, setJenisBordir] = useState("Bordir Timbul 3D");
   const [ukuranBordir, setUkuranBordir] = useState("20-24 CM");
-  const [jumlahPemesanan, setJumlahPemesanan] = useState(1);
-  const [metodeKirim, setMetodeKirim] = useState("");
+
+  // ✅ FIX: string supaya boleh kosong saat user hapus
+  const [jumlahPemesanan, setJumlahPemesanan] = useState("1");
+
   const [showPayment, setShowPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [paymentOptions, setPaymentOptions] = useState([
@@ -41,7 +91,7 @@ export default function Pesan() {
   const [paymentError, setPaymentError] = useState("");
 
   // ============================
-  // Upload state (sesuai gambar)
+  // Upload state
   // ============================
   const fileInputRef = useRef(null);
   const [fileName, setFileName] = useState("");
@@ -97,9 +147,7 @@ export default function Pesan() {
     }
 
     const savedQris = localStorage.getItem("qris_image");
-    if (savedQris) {
-      setQrisImage(savedQris);
-    }
+    if (savedQris) setQrisImage(savedQris);
   }, []);
 
   useEffect(() => {
@@ -109,7 +157,7 @@ export default function Pesan() {
   }, [paymentMethod, paymentOptions]);
 
   // ============================
-  // LOGIN CHECK (ubah key sesuai sistem login kamu)
+  // LOGIN CHECK
   // ============================
   const isLoggedIn = useMemo(() => {
     const token = localStorage.getItem("token");
@@ -118,22 +166,31 @@ export default function Pesan() {
     return Boolean(token || accessToken || user);
   }, []);
 
+  // ✅ angka aman untuk dipakai hitung/payload
+  const jumlahNumber = useMemo(() => {
+    const n = parseInt(jumlahPemesanan || "0", 10);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  }, [jumlahPemesanan]);
+
   const isFormValid = useMemo(() => {
     return (
       Boolean(jenisBordir) &&
       Boolean(ukuranBordir) &&
-      Boolean(metodeKirim) &&
-      Number(jumlahPemesanan) > 0
+      parseInt(jumlahPemesanan || "0", 10) > 0
     );
-  }, [jenisBordir, ukuranBordir, metodeKirim, jumlahPemesanan]);
+  }, [jenisBordir, ukuranBordir, jumlahPemesanan]);
+
+  // ✅ FIX: tombol pesan harus butuh file juga
+  const isReadyToOrder = useMemo(() => {
+    return isFormValid && Boolean(file);
+  }, [isFormValid, file]);
 
   // ============================
   // Aksi tombol
   // ============================
   const handleAddToCart = () => {
-    // wajib login
     if (!isLoggedIn) {
-      // arahkan login + simpan redirect
+      localStorage.removeItem("keranjang");
       localStorage.setItem("redirect_after_login", "/pesan");
       navigate("/login");
       return;
@@ -144,8 +201,7 @@ export default function Pesan() {
       layanan,
       jenisBordir,
       ukuranBordir,
-      jumlahPemesanan,
-      metodeKirim,
+      jumlahPemesanan: jumlahNumber, // ✅ pakai angka aman
       designFileName: fileName || "",
       designPreviewUrl: preview || "",
       createdAt: new Date().toISOString(),
@@ -154,14 +210,10 @@ export default function Pesan() {
     const cart = JSON.parse(localStorage.getItem("keranjang")) || [];
     cart.push(item);
     localStorage.setItem("keranjang", JSON.stringify(cart));
-
-    // ✅ sesuai request: tidak pakai notif/alert
-    // (opsional) bisa navigate ke halaman keranjang kalau ada:
-    // navigate("/keranjang");
+    navigate("/keranjang");
   };
 
   const handlePesan = () => {
-    // extra safety (walau tombol sudah disabled ketika belum login)
     if (!isLoggedIn) {
       localStorage.setItem("redirect_after_login", "/pesan");
       navigate("/login");
@@ -169,14 +221,14 @@ export default function Pesan() {
     }
 
     if (!isFormValid) return;
+    if (!file) return; // ✅ FIX: wajib upload file
 
     const orderPayload = {
-      orderNumber: `REG-${Date.now()}`, // sementara (backend nanti generate)
+      orderNumber: `REG-${Date.now()}`,
       layanan,
       jenisBordir,
       ukuranBordir,
-      jumlahPemesanan,
-      metodeKirim,
+      jumlahPemesanan: jumlahNumber, // ✅ pakai angka aman
       designFileName: fileName || "",
       designPreviewUrl: preview || "",
       total: 0,
@@ -194,7 +246,7 @@ export default function Pesan() {
     { nama: "Bordir Topi", icon: topi },
     { nama: "Bordir Emblem", icon: emblem },
     { nama: "Bordir Jaket", icon: jaket },
-    { nama: "Bordir Lainnya", icon: tas },
+    { nama: "Bordir Lainnya", type: "ellipsis" },
   ];
 
   const customFont = { fontFamily: '"Noto Sans Telugu", sans-serif' };
@@ -227,7 +279,6 @@ export default function Pesan() {
       jenisBordir: orderDraft.jenisBordir,
       ukuranBordir: orderDraft.ukuranBordir,
       jumlahPemesanan: orderDraft.jumlahPemesanan,
-      metodeKirim: orderDraft.metodeKirim,
       paymentMethod,
       total: orderDraft.total || 0,
     };
@@ -235,7 +286,7 @@ export default function Pesan() {
     localStorage.setItem("invoice_data", JSON.stringify(invoiceData));
     localStorage.setItem(
       "invoice_file_name",
-      `Invoice-${orderDraft.orderNumber}.html`
+      `Invoice-${orderDraft.orderNumber}.html`,
     );
     localStorage.setItem(
       "pesanan_aktif",
@@ -243,7 +294,7 @@ export default function Pesan() {
         ...orderDraft,
         paymentMethod,
         status: "menunggu",
-      })
+      }),
     );
     localStorage.removeItem("order_draft");
     setShowPayment(false);
@@ -266,16 +317,27 @@ export default function Pesan() {
             <button
               key={item.nama}
               onClick={() => setLayanan(item.nama)}
-              className={`flex flex-col items-center border-2 rounded-2xl p-5 bg-white transition cursor-pointer ${
+              className={`flex flex-col items-center justify-center border-2 rounded-2xl p-5 bg-white transition cursor-pointer ${
                 layanan === item.nama
                   ? "border-[#3E7CB1] bg-[#EAF2FA]"
-                  : "border-[#A9C0E0] hover:border-[#3E7CB1]"
+                  : "border-[#A9C0E0] hover:border-[#3E7CB1] hover:bg-[#F5F9FF] hover:shadow-md"
               }`}
             >
-              <img src={item.icon} alt={item.nama} className="w-12 sm:w-16 md:w-20 opacity-70" />
+              <div className="w-full flex justify-center">
+                {item.type === "ellipsis" ? (
+                  <MoreHorizontal className="w-2/3 h-auto opacity-70 text-[#3E7CB1]" />
+                ) : (
+                  <img
+                    src={item.icon}
+                    alt={item.nama}
+                    className="w-2/3 h-auto opacity-70"
+                  />
+                )}
+              </div>
+
               <p
                 style={customFont}
-                className="mt-3 text-[#3E7CB1] font-semibold text-xs sm:text-sm"
+                className="mt-3 text-[#3E7CB1] font-semibold text-xs sm:text-sm text-center"
               >
                 {item.nama}
               </p>
@@ -289,34 +351,24 @@ export default function Pesan() {
         <div className="max-w-6xl mx-auto bg-[#F17300] rounded-[28px] p-5 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
           {/* ========== KIRI: Form Input ========== */}
           <div className="space-y-4">
-            <div>
-              <label className="block text-white text-sm mb-2 font-medium">
-                Jenis Bordir
-              </label>
-              <select
-                value={jenisBordir}
-                onChange={(e) => setJenisBordir(e.target.value)}
-                className="w-full px-5 py-3 rounded-2xl bg-white text-gray-700 outline-none"
-              >
-                <option>Bordir Timbul 3D</option>
-                <option>Bordir Komputer</option>
-              </select>
-            </div>
+            <SelectField
+              label="Jenis Bordir"
+              value={jenisBordir}
+              onChange={(e) => setJenisBordir(e.target.value)}
+            >
+              <option>Bordir Timbul 3D</option>
+              <option>Bordir Komputer</option>
+            </SelectField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-white text-sm mb-2 font-medium">
-                  Ukuran Bordir
-                </label>
-                <select
-                  value={ukuranBordir}
-                  onChange={(e) => setUkuranBordir(e.target.value)}
-                  className="w-full px-5 py-3 rounded-2xl bg-white text-gray-700 outline-none"
-                >
-                  <option>20-24 CM</option>
-                  <option>10-15 CM</option>
-                </select>
-              </div>
+              <SelectField
+                label="Ukuran Bordir"
+                value={ukuranBordir}
+                onChange={(e) => setUkuranBordir(e.target.value)}
+              >
+                <option>20-24 CM</option>
+                <option>10-15 CM</option>
+              </SelectField>
 
               <div>
                 <label className="block text-white text-sm mb-2 font-medium">
@@ -324,29 +376,32 @@ export default function Pesan() {
                 </label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   value={jumlahPemesanan}
-                  onChange={(e) =>
-                    setJumlahPemesanan(Math.max(1, Number(e.target.value || 1)))
-                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+
+                    // boleh kosong
+                    if (v === "") {
+                      setJumlahPemesanan("");
+                      return;
+                    }
+
+                    // hanya angka
+                    if (/^\d+$/.test(v)) {
+                      setJumlahPemesanan(v);
+                    }
+                  }}
+                  onBlur={() => {
+                    const n = parseInt(jumlahPemesanan || "0", 10);
+                    if (!n || n < 1) setJumlahPemesanan("1");
+                  }}
                   placeholder="Masukkan jumlah"
                   className="w-full px-5 py-3 rounded-2xl bg-white text-gray-700 outline-none placeholder:text-gray-400"
                   onKeyDown={(e) => e.key === "-" && e.preventDefault()}
                 />
               </div>
-            </div>
-
-            <div>
-              <select
-                value={metodeKirim}
-                onChange={(e) => setMetodeKirim(e.target.value)}
-                className="w-full px-5 py-3 rounded-2xl bg-white text-gray-700 outline-none"
-              >
-                <option value="">Pilih Metode Pengiriman</option>
-                <option>JNE</option>
-                <option>J&T</option>
-                <option>Sicepat</option>
-              </select>
             </div>
 
             <div>
@@ -369,19 +424,20 @@ export default function Pesan() {
 
               <button
                 onClick={handlePesan}
-                disabled={!isLoggedIn || !isFormValid}
-                className={`px-10 py-3 rounded-full text-white font-semibold transition w-full sm:w-auto
-    ${
-      isLoggedIn && isFormValid
-        ? "bg-green-500 cursor-pointer hover:bg-green-600"
-        : "bg-green-500/60" // OFF tanpa cursor silang
-    }`}
+                disabled={isLoggedIn ? !isReadyToOrder : false}
+                className={`px-12 py-3 rounded-full text-white font-semibold transition w-full sm:w-auto ${
+                  !isLoggedIn || isReadyToOrder
+                    ? "bg-green-500 cursor-pointer hover:bg-green-600"
+                    : "bg-green-500/60"
+                }`}
                 title={
                   !isLoggedIn
                     ? "Login dulu untuk pesan"
-                    : !isFormValid
-                    ? "Lengkapi form terlebih dahulu"
-                    : ""
+                    : !file
+                      ? "Upload file desain dulu"
+                      : !isFormValid
+                        ? "Lengkapi form terlebih dahulu"
+                        : ""
                 }
               >
                 Pesan
@@ -395,7 +451,7 @@ export default function Pesan() {
               onClick={handlePickFile}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              className="w-full min-h-[280px] sm:min-h-[380px] bg-white rounded-2xl cursor-pointer select-none p-6 sm:p-8 flex flex-col items-center justify-center"
+              className="w-full min-h-[280px] sm:min-h-[320px] bg-white rounded-2xl cursor-pointer select-none p-6 sm:p-8 flex flex-col items-center justify-center"
             >
               {!file ? (
                 <>
@@ -449,13 +505,12 @@ export default function Pesan() {
         </div>
       </section>
 
+      {/* ===================== MODAL PEMBAYARAN ===================== */}
       {showPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-5xl rounded-3xl bg-orange-500 p-8 shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white text-lg font-semibold">
-                Pembayaran
-              </h3>
+              <h3 className="text-white text-lg font-semibold">Pembayaran</h3>
               <button
                 onClick={() => setShowPayment(false)}
                 className="text-white/90 hover:text-white"
@@ -465,41 +520,26 @@ export default function Pesan() {
               </button>
             </div>
 
-            <div className={`grid grid-cols-1 ${showQris ? "md:grid-cols-3" : "md:grid-cols-2"} gap-6`}>
+            <div
+              className={`grid grid-cols-1 ${
+                showQris ? "md:grid-cols-3" : "md:grid-cols-2"
+              } gap-6`}
+            >
               <div className="md:col-span-2 bg-white rounded-2xl p-4 md:p-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Metode Pembayaran
-                </label>
-                <div className="relative">
-                  <select
-                    className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  >
-                    {paymentOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500">
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="opacity-80"
-                    >
-                      <path
-                        d="M6 9l6 6 6-6"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                </div>
+                <SelectField
+                  label="Metode Pembayaran"
+                  labelClassName="block text-sm font-medium text-gray-700 mb-2"
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  selectClassName="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  arrowClassName="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-500"
+                >
+                  {paymentOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </SelectField>
 
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -534,10 +574,11 @@ export default function Pesan() {
                 >
                   Pesan
                 </button>
+
                 <div className="mt-3 text-sm text-gray-700 font-semibold">
                   Total yang harus dibayar:{" "}
                   <span className="text-gray-900">
-                    {formatRupiah(jumlahPemesanan * 0)}
+                    {formatRupiah(jumlahNumber * 0)}
                   </span>
                 </div>
               </div>

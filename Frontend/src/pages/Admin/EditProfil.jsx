@@ -417,13 +417,6 @@ const EditProfil = () => {
             value={newMethodLabel}
             onChange={(e) => setNewMethodLabel(e.target.value)}
           />
-          <input
-            type="text"
-            placeholder="Value (opsional)"
-            className="rounded-xl border border-slate-200 px-4 py-2"
-            value={newMethodValue}
-            onChange={(e) => setNewMethodValue(e.target.value)}
-          />
         </div>
         <button
           onClick={handleAddMethod}

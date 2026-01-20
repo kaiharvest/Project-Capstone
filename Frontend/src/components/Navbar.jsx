@@ -32,7 +32,7 @@ export default function Navbar() {
 
 
   return (
-    <nav className="bg-[#010E31] text-[#81A4CD] shadow-md">
+    <nav className="bg-[#010E31] text-[#81A4CD] shadow-none fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         {/* === LOGO === */}
         <NavLink to="/" className="flex items-center gap-2">
