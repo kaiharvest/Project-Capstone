@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import MainLayout from "./components/MainLayout";
@@ -42,6 +42,28 @@ function NotFound() {
   );
 }
 
+function RequireAuth({ children }) {
+  const location = useLocation();
+  const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+  if (!token) {
+    localStorage.setItem("redirect_after_login", location.pathname);
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
+function RequireAdmin({ children }) {
+  const location = useLocation();
+  const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+  const userRaw = localStorage.getItem("user");
+  const user = userRaw ? JSON.parse(userRaw) : null;
+  if (!token || !user || user.role !== "admin") {
+    localStorage.setItem("redirect_after_login", location.pathname);
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
 export default function App() {
   return (
     <>
@@ -54,10 +76,38 @@ export default function App() {
           <Route path="/profil" element={<Profil />} />
           <Route path="/portofolio" element={<Portofolio />} />
           <Route path="/pesan" element={<Pesan />} />
-          <Route path="/pembayaran" element={<Pembayaran />} /> {/* <-- TAMBAH */}
-          <Route path="/pesanan" element={<Pesanan />} />
-          <Route path="/keranjang" element={<Keranjang />} />
-          <Route path="/akun" element={<Akun />} />
+          <Route
+            path="/pembayaran"
+            element={
+              <RequireAuth>
+                <Pembayaran />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/pesanan"
+            element={
+              <RequireAuth>
+                <Pesanan />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/keranjang"
+            element={
+              <RequireAuth>
+                <Keranjang />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/akun"
+            element={
+              <RequireAuth>
+                <Akun />
+              </RequireAuth>
+            }
+          />
           <Route path="/invoice" element={<Invoice />} />
         </Route>
 
@@ -68,7 +118,14 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* ===== ADMIN LAYOUT ===== */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route
+          path="/admin"
+          element={
+            <RequireAdmin>
+              <AdminLayout />
+            </RequireAdmin>
+          }
+        >
           {/* default admin route */}
           <Route index element={<Navigate to="beranda" replace />} />
           <Route path="beranda" element={<BerandaAdmin />} />

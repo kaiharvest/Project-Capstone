@@ -26,10 +26,18 @@ export default function Login() {
 
       toast.success("Login berhasil!");
 
+      const redirectAfterLogin = localStorage.getItem("redirect_after_login");
+
       if (user.role === "admin") {
+        localStorage.removeItem("redirect_after_login");
         navigate("/admin/beranda"); // Arahkan admin ke halaman utama admin
       } else {
-        navigate("/akun");
+        if (redirectAfterLogin) {
+          localStorage.removeItem("redirect_after_login");
+          navigate(redirectAfterLogin);
+        } else {
+          navigate("/akun");
+        }
       }
     } catch (err) {
       const errorMessage =

@@ -22,9 +22,22 @@ export default function Keranjang() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState({ open: false, url: "", name: "" });
+  const isLoggedIn = useMemo(() => {
+    const token = localStorage.getItem("token");
+    const accessToken = localStorage.getItem("access_token");
+    const user = localStorage.getItem("user");
+    return Boolean(token || accessToken || user);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
+    if (!isLoggedIn) {
+      localStorage.setItem("redirect_after_login", "/keranjang");
+      navigate("/login");
+      return () => {
+        isMounted = false;
+      };
+    }
     const fetchCart = async () => {
       setLoading(true);
       try {
