@@ -1,21 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  UserCircle, 
-  Package, 
-  ShoppingCart, 
-  Box,
-  FileText,
-  LogOut,
-  BarChart3,
-  TrendingUp,
-  DollarSign,
-  Eye,
-  FileCheck,
-  Trash2,
-  Download
-} from 'lucide-react';
+import { Package, ShoppingCart, FileText, DollarSign } from 'lucide-react';
+import api from '../../services/api';
 
 const MONTHS = [
   'Januari',
@@ -32,156 +17,6 @@ const MONTHS = [
   'Desember'
 ];
 
-const DUMMY_REPORT = {
-  total_transactions: 257,
-  products_sold: 500,
-  total_revenue: 100000000,
-  sales_chart: [
-    { date: '2025-01-01', total: 45 },
-    { date: '2025-02-01', total: 30 },
-    { date: '2025-03-01', total: 55 },
-    { date: '2025-04-01', total: 42 },
-    { date: '2025-05-01', total: 28 },
-    { date: '2025-06-01', total: 60 },
-    { date: '2025-07-01', total: 44 },
-    { date: '2025-08-01', total: 32 },
-    { date: '2025-09-01', total: 58 },
-    { date: '2025-10-01', total: 40 },
-    { date: '2025-11-01', total: 35 },
-    { date: '2025-12-01', total: 62 }
-  ],
-  summary: {
-    top_products: [
-      { id: 1, name: 'Bordir Seragam', qty: 58 },
-      { id: 2, name: 'Bordir Emblem', qty: 45 },
-      { id: 3, name: 'Bordir Topi', qty: 23 }
-    ],
-    top_embroidery_types: [
-      { embroidery_type: 'Bordir Biasa', total: 40 },
-      { embroidery_type: 'Bordir 3D', total: 30 },
-      { embroidery_type: 'Bordir 5 Warna', total: 23 }
-    ]
-  }
-};
-
-// Sidebar Component
-const Sidebar = ({ activeMenu, setActiveMenu }) => {
-  const menuItems = [
-    { id: 'beranda', label: 'Beranda', icon: LayoutDashboard },
-    { id: 'users', label: 'Kelola User', icon: Users },
-    { id: 'profile', label: 'Edit Profil', icon: UserCircle },
-    { id: 'products', label: 'Edit Produk', icon: Package },
-    { id: 'transactions', label: 'Status Transaksi', icon: ShoppingCart },
-    { id: 'orders', label: 'Status Barang', icon: Box },
-    { id: 'reports', label: 'Laporan Penjualan', icon: FileText }
-  ];
-
-  return (
-    <div className="w-64 bg-slate-900 min-h-screen p-4 flex flex-col">
-      <div className="mb-8">
-        <h1 className="text-white text-3xl font-bold">
-          JA<span className="text-red-500">.</span>
-        </h1>
-        <p className="text-white text-xl">Bordir</p>
-      </div>
-
-      <nav className="flex-1 space-y-2">
-        {menuItems.map(item => (
-          <button
-            key={item.id}
-            onClick={() => setActiveMenu(item.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              activeMenu === item.id 
-                ? 'bg-white text-slate-900' 
-                : 'text-white hover:bg-slate-800'
-            }`}
-          >
-            <item.icon size={20} />
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
-
-      <button className="flex items-center gap-3 px-4 py-3 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors mt-4">
-        <LogOut size={20} />
-        <span>Keluar</span>
-      </button>
-    </div>
-  );
-};
-
-// Dashboard/Beranda Component
-const BerandaPage = () => {
-  return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-slate-900 mb-8">Selamat Datang Admin</h1>
-      
-      <div className="grid grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-blue-200 p-3 rounded-full">
-              <Users className="text-blue-600" size={24} />
-            </div>
-            <p className="text-sm text-blue-600">Pengguna Terdaftar</p>
-          </div>
-          <p className="text-4xl font-bold text-blue-900">{mockStats.totalUsers}</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-cyan-200 p-3 rounded-full">
-              <Box className="text-cyan-600" size={24} />
-            </div>
-            <p className="text-sm text-cyan-600">Kategori Bordir</p>
-          </div>
-          <p className="text-4xl font-bold text-cyan-900">5</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-sky-50 to-sky-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-sky-200 p-3 rounded-full">
-              <ShoppingCart className="text-sky-600" size={24} />
-            </div>
-            <p className="text-sm text-sky-600">Total Transaksi</p>
-          </div>
-          <p className="text-4xl font-bold text-sky-900">{mockStats.totalTransactions}</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-blue-200 p-3 rounded-full">
-              <DollarSign className="text-blue-600" size={24} />
-            </div>
-            <p className="text-sm text-blue-600">Pemasukan Total (Rp)</p>
-          </div>
-          <p className="text-3xl font-bold text-blue-900">{mockStats.totalRevenue.toLocaleString('id-ID')}</p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-slate-900">Grafik Penjualan</h2>
-          <select className="border border-slate-300 rounded-lg px-4 py-2 text-sm">
-            <option>2026-2027</option>
-          </select>
-        </div>
-        <div className="flex items-end justify-around h-64 gap-2">
-          {mockSalesData.map((data, i) => (
-            <div key={i} className="flex flex-col items-center flex-1">
-              <div 
-                className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t-lg transition-all hover:from-amber-500 hover:to-amber-600"
-                style={{ height: `${(data.sales / 75) * 100}%` }}
-              />
-              <p className="text-xs text-slate-600 mt-2">{data.month}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Laporan Penjualan Component
 const LaporanPage = () => {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
@@ -204,8 +39,22 @@ const LaporanPage = () => {
 
   const fetchReport = async () => {
     setLoading(true);
-    setReport(DUMMY_REPORT);
-    setLoading(false);
+    try {
+      const startDate = new Date(selectedYear, selectedMonth, 1);
+      const endDate = new Date(selectedYear, selectedMonth + 1, 0);
+      const response = await api.get('/admin/reports/sales', {
+        params: {
+          period: periodDays,
+          start_date: startDate.toISOString().slice(0, 10),
+          end_date: endDate.toISOString().slice(0, 10)
+        }
+      });
+      setReport(response.data || {});
+    } catch (error) {
+      console.error('Gagal memuat laporan penjualan:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

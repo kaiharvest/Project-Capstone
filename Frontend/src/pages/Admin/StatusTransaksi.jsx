@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -330,12 +330,16 @@ const StatusBarangPage = () => {
 const StatusTransaksiPage = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('newest');
 
   useEffect(() => {
     let isMounted = true;
     const fetchTransactions = async () => {
       try {
-        const response = await api.get('/admin/transactions');
+        const response = await api.get('/admin/transactions', {
+          params: statusFilter === 'all' ? {} : { status: statusFilter }
+        });
         const items = response.data.data || [];
         if (!isMounted) return;
         setTransactions(items);
@@ -350,7 +354,7 @@ const StatusTransaksiPage = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [statusFilter]);
 
   const handleUpdateStatus = async (transactionId, status) => {
     try {
@@ -394,11 +398,48 @@ const StatusTransaksiPage = () => {
     }
   };
 
+  const sortedTransactions = useMemo(() => {
+    const list = [...transactions];
+    list.sort((a, b) => {
+      const aDate = new Date(a?.order?.created_at || a?.created_at || 0).getTime();
+      const bDate = new Date(b?.order?.created_at || b?.created_at || 0).getTime();
+      return sortOrder === 'newest' ? bDate - aDate : aDate - bDate;
+    });
+    return list;
+  }, [transactions, sortOrder]);
+
   return (
     <div className="p-4 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
         <ShoppingCart className="text-blue-800" size={26} />
         <h1 className="text-2xl font-bold text-blue-900">Status Transaksi</h1>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-600">Filter</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700"
+          >
+            <option value="all">Semua</option>
+            <option value="pending">Menunggu</option>
+            <option value="paid">Disetujui</option>
+            <option value="failed">Ditolak</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-600">Urutkan</span>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700"
+          >
+            <option value="newest">Terbaru</option>
+            <option value="oldest">Terlama</option>
+          </select>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
@@ -430,7 +471,7 @@ const StatusTransaksiPage = () => {
                 </td>
               </tr>
             )}
-            {transactions.map((transaction) => {
+            {sortedTransactions.map((transaction) => {
               const order = transaction.order;
               return (
                 <tr key={transaction.id} className="border-t border-slate-200 text-slate-700">

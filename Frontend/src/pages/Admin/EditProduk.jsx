@@ -1,308 +1,467 @@
-import React, { useState } from 'react';
-import { Package, Download, FileCheck, Trash2, X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from "react";
+import { Package, Save, Plus, Pencil, Trash2 } from "lucide-react";
+import api from "../../services/api";
+
+const DEFAULT_RULES = {
+  base_price_per_cm: 500,
+  shipping_cost: 0,
+  embroidery_multipliers: {
+    "3d": 1.5,
+    computer: 1.0,
+  },
+  service_multipliers: {
+    seragam: 1.0,
+    topi: 1.2,
+    emblem: 1.1,
+    jaket: 1.3,
+    tas: 1.2,
+  },
+};
+
+const toNumber = (value, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const mergeRules = (incoming) => ({
+  ...DEFAULT_RULES,
+  ...incoming,
+  embroidery_multipliers: {
+    ...DEFAULT_RULES.embroidery_multipliers,
+    ...(incoming?.embroidery_multipliers || {}),
+  },
+  service_multipliers: {
+    ...DEFAULT_RULES.service_multipliers,
+    ...(incoming?.service_multipliers || {}),
+  },
+});
 
 const EditProduk = () => {
-  const [formData, setFormData] = useState({
-    jenisBordir: '',
-    ukuranBordir: ''
-  });
-  const [products, setProducts] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [imageData, setImageData] = useState(null);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [types, setTypes] = useState([]);
+  const [sizes, setSizes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const resetForm = () => {
-    setEditingId(null);
-    setFormData({ jenisBordir: '', ukuranBordir: '' });
-    setSelectedImage(null);
-    setImagePreview(null);
-    setImageData(null);
-    setErrors({});
-  };
+  const [newTypeName, setNewTypeName] = useState("");
+  const [editingTypeId, setEditingTypeId] = useState(null);
+  const [editingTypeName, setEditingTypeName] = useState("");
 
-  const handleOpenCreate = () => {
-    resetForm();
-    setIsModalOpen(true);
-  };
+  const [newSizeLabel, setNewSizeLabel] = useState("");
+  const [newSizeCm, setNewSizeCm] = useState("");
+  const [editingSizeId, setEditingSizeId] = useState(null);
+  const [editingSizeLabel, setEditingSizeLabel] = useState("");
+  const [editingSizeCm, setEditingSizeCm] = useState("");
 
-  const handleOpenEdit = (product) => {
-    setEditingId(product.id);
-    setFormData({
-      jenisBordir: product.jenisBordir,
-      ukuranBordir: product.ukuranBordir
-    });
-    setSelectedImage(null);
-    setImagePreview(product.imageData || null);
-    setImageData(product.imageData || null);
-    setErrors({});
-    setIsModalOpen(true);
-  };
+  const [pricingRules, setPricingRules] = useState(DEFAULT_RULES);
+  const [savingPricing, setSavingPricing] = useState(false);
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (!file.type.match('image/jpeg') && !file.type.match('image/png')) {
-      alert('Hanya file JPG dan PNG yang diperbolehkan');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Ukuran file maksimal 5MB');
-      return;
-    }
-
-    setSelectedImage(file);
-    setImagePreview(URL.createObjectURL(file));
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImageData(reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleSaveChanges = () => {
-    setErrors({});
-    const newErrors = {};
-
-    if (!formData.jenisBordir.trim()) {
-      newErrors.jenisBordir = 'Jenis Bordir tidak boleh kosong';
-    }
-
-    if (!formData.ukuranBordir.trim()) {
-      newErrors.ukuranBordir = 'Ukuran Bordir tidak boleh kosong';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    const nextProduct = {
-      id: editingId || Date.now(),
-      jenisBordir: formData.jenisBordir.trim(),
-      ukuranBordir: formData.ukuranBordir.trim(),
-      imageName: selectedImage?.name || '',
-      imageData: imageData || null
-    };
-
-    if (editingId) {
-      setProducts((prev) =>
-        prev.map((item) => (item.id === editingId ? nextProduct : item))
-      );
-    } else {
-      setProducts((prev) => [nextProduct, ...prev]);
-    }
-
-    setIsModalOpen(false);
-    resetForm();
-
-    setShowSuccessPopup(true);
-    setTimeout(() => {
-      setShowSuccessPopup(false);
-    }, 3000);
-  };
-
-  const handleDelete = (productId) => {
-    setProducts((prev) => prev.filter((item) => item.id !== productId));
-    if (editingId === productId) {
-      resetForm();
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [typesRes, sizesRes, settingsRes] = await Promise.all([
+        api.get("/admin/embroidery-types"),
+        api.get("/admin/embroidery-sizes"),
+        api.get("/admin/settings"),
+      ]);
+      setTypes(typesRes.data.data || []);
+      setSizes(sizesRes.data.data || []);
+      setPricingRules(mergeRules(settingsRes.data.pricing_rules));
+    } catch (error) {
+      console.error("Gagal memuat data produk:", error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleAddType = async () => {
+    const name = newTypeName.trim();
+    if (!name) return;
+    try {
+      await api.post("/admin/embroidery-types", { name });
+      setNewTypeName("");
+      fetchData();
+    } catch (error) {
+      console.error("Gagal tambah jenis bordir:", error);
+    }
+  };
+
+  const handleSaveType = async () => {
+    const name = editingTypeName.trim();
+    if (!editingTypeId || !name) return;
+    try {
+      await api.put(`/admin/embroidery-types/${editingTypeId}`, { name });
+      setEditingTypeId(null);
+      setEditingTypeName("");
+      fetchData();
+    } catch (error) {
+      console.error("Gagal update jenis bordir:", error);
+    }
+  };
+
+  const handleDeleteType = async (id) => {
+    try {
+      await api.delete(`/admin/embroidery-types/${id}`);
+      fetchData();
+    } catch (error) {
+      console.error("Gagal hapus jenis bordir:", error);
+    }
+  };
+
+  const handleAddSize = async () => {
+    const label = newSizeLabel.trim();
+    const sizeCm = toNumber(newSizeCm, 0);
+    if (!label || sizeCm <= 0) return;
+    try {
+      await api.post("/admin/embroidery-sizes", {
+        label,
+        size_cm: sizeCm,
+      });
+      setNewSizeLabel("");
+      setNewSizeCm("");
+      fetchData();
+    } catch (error) {
+      console.error("Gagal tambah ukuran bordir:", error);
+    }
+  };
+
+  const handleSaveSize = async () => {
+    const label = editingSizeLabel.trim();
+    const sizeCm = toNumber(editingSizeCm, 0);
+    if (!editingSizeId || !label || sizeCm <= 0) return;
+    try {
+      await api.put(`/admin/embroidery-sizes/${editingSizeId}`, {
+        label,
+        size_cm: sizeCm,
+      });
+      setEditingSizeId(null);
+      setEditingSizeLabel("");
+      setEditingSizeCm("");
+      fetchData();
+    } catch (error) {
+      console.error("Gagal update ukuran bordir:", error);
+    }
+  };
+
+  const handleDeleteSize = async (id) => {
+    try {
+      await api.delete(`/admin/embroidery-sizes/${id}`);
+      fetchData();
+    } catch (error) {
+      console.error("Gagal hapus ukuran bordir:", error);
+    }
+  };
+
+  const updatePricingField = (key, value) => {
+    setPricingRules((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const updateMultiplier = (group, key, value) => {
+    setPricingRules((prev) => ({
+      ...prev,
+      [group]: {
+        ...prev[group],
+        [key]: value,
+      },
+    }));
+  };
+
+  const handleSavePricing = async () => {
+    setSavingPricing(true);
+    try {
+      await api.put("/admin/settings", {
+        pricing_rules: {
+          ...pricingRules,
+          base_price_per_cm: toNumber(pricingRules.base_price_per_cm, 0),
+          shipping_cost: toNumber(pricingRules.shipping_cost, 0),
+          embroidery_multipliers: {
+            "3d": toNumber(pricingRules.embroidery_multipliers["3d"], 1),
+            computer: toNumber(pricingRules.embroidery_multipliers.computer, 1),
+          },
+          service_multipliers: {
+            seragam: toNumber(pricingRules.service_multipliers.seragam, 1),
+            topi: toNumber(pricingRules.service_multipliers.topi, 1),
+            emblem: toNumber(pricingRules.service_multipliers.emblem, 1),
+            jaket: toNumber(pricingRules.service_multipliers.jaket, 1),
+            tas: toNumber(pricingRules.service_multipliers.tas, 1),
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Gagal simpan harga:", error);
+    } finally {
+      setSavingPricing(false);
+    }
+  };
+
+  const pricingPreview = useMemo(() => pricingRules, [pricingRules]);
 
   return (
-    <div className="p-4 sm:p-8">
-      <div className="mb-6">
-        <div className="flex items-center gap-3">
-          <Package className="text-blue-700" size={26} />
+    <div className="p-4 sm:p-8 space-y-8">
+      <div className="flex items-center gap-3">
+        <Package className="text-blue-700" size={26} />
+        <div>
+          <h1 className="text-2xl font-bold text-blue-900">Edit Produk</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Kelola jenis, ukuran, dan harga bordir.
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-800">Pengaturan Harga</h2>
+          <button
+            onClick={handleSavePricing}
+            disabled={savingPricing}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 disabled:opacity-60"
+          >
+            <Save size={16} />
+            Simpan Harga
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-blue-900">Edit Produk</h1>
-            <p className="text-sm text-slate-500 mt-1">Update Produk Anda</p>
+            <label className="block text-sm font-medium text-slate-600 mb-2">
+              Harga dasar per cm
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={pricingRules.base_price_per_cm}
+              onChange={(e) => updatePricingField("base_price_per_cm", e.target.value)}
+              className="w-full border border-slate-300 rounded-xl px-4 py-2.5"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-2">
+              Ongkir (0 = gratis)
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={pricingRules.shipping_cost}
+              onChange={(e) => updatePricingField("shipping_cost", e.target.value)}
+              className="w-full border border-slate-300 rounded-xl px-4 py-2.5"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="border border-slate-200 rounded-xl p-4">
+            <h3 className="font-semibold text-slate-700 mb-3">Multiplier Jenis Bordir</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Bordir 3D</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={pricingRules.embroidery_multipliers["3d"]}
+                  onChange={(e) => updateMultiplier("embroidery_multipliers", "3d", e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Bordir Komputer</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={pricingRules.embroidery_multipliers.computer}
+                  onChange={(e) => updateMultiplier("embroidery_multipliers", "computer", e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border border-slate-200 rounded-xl p-4">
+            <h3 className="font-semibold text-slate-700 mb-3">Multiplier Layanan</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {Object.entries(pricingPreview.service_multipliers).map(([key, value]) => (
+                <div key={key}>
+                  <label className="block text-xs text-slate-500 mb-1 capitalize">{key}</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={value}
+                    onChange={(e) => updateMultiplier("service_multipliers", key, e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <p className="text-sm text-slate-600">Kelola data produk bordir Anda di bawah ini.</p>
-        <button
-          className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors"
-          onClick={handleOpenCreate}
-        >
-          Tambahkan Produk
-        </button>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">Jenis Bordir</h2>
+          <div className="flex gap-3 mb-4">
+            <input
+              type="text"
+              value={newTypeName}
+              onChange={(e) => setNewTypeName(e.target.value)}
+              placeholder="Contoh: Bordir Timbul 3D"
+              className="flex-1 border border-slate-300 rounded-xl px-4 py-2.5"
+            />
+            <button
+              onClick={handleAddType}
+              className="bg-blue-600 text-white px-4 rounded-xl text-sm font-semibold hover:bg-blue-700"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
 
-      {showSuccessPopup && (
-        <div className="bg-green-500 text-white rounded-lg p-3 mb-5 flex items-center gap-2 max-w-xl">
-          <FileCheck className="text-white" size={18} />
-          <p className="font-semibold text-sm">Produk berhasil disimpan.</p>
-        </div>
-      )}
-
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-600">
-            <tr>
-              <th className="px-4 py-3 text-left font-semibold">Jenis Bordir</th>
-              <th className="px-4 py-3 text-left font-semibold">Ukuran Bordir</th>
-              <th className="px-4 py-3 text-left font-semibold">Foto</th>
-              <th className="px-4 py-3 text-center font-semibold">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-500">
-                  Belum ada produk.
-                </td>
-              </tr>
-            ) : (
-              products.map((product) => (
-                <tr key={product.id} className="border-t border-slate-100">
-                  <td className="px-4 py-3 text-slate-700">{product.jenisBordir}</td>
-                  <td className="px-4 py-3 text-slate-700">{product.ukuranBordir}</td>
-                  <td className="px-4 py-3">
-                    {product.imageData ? (
-                      <img
-                        src={product.imageData}
-                        alt={product.imageName || 'Portofolio'}
-                        className="h-10 w-14 object-cover rounded-md"
-                      />
+          {loading ? (
+            <p className="text-sm text-slate-500">Memuat...</p>
+          ) : types.length === 0 ? (
+            <p className="text-sm text-slate-500">Belum ada jenis bordir.</p>
+          ) : (
+            <div className="space-y-2">
+              {types.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2"
+                >
+                  {editingTypeId === item.id ? (
+                    <input
+                      value={editingTypeName}
+                      onChange={(e) => setEditingTypeName(e.target.value)}
+                      className="flex-1 border border-slate-300 rounded-md px-2 py-1 mr-2"
+                    />
+                  ) : (
+                    <span className="text-sm text-slate-700">{item.name}</span>
+                  )}
+                  <div className="flex items-center gap-2">
+                    {editingTypeId === item.id ? (
+                      <button
+                        onClick={handleSaveType}
+                        className="text-xs px-3 py-1 rounded-full bg-green-500 text-white"
+                      >
+                        Simpan
+                      </button>
                     ) : (
-                      <span className="text-xs text-slate-400">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
                       <button
-                        onClick={() => handleOpenEdit(product)}
-                        className="px-3 py-1.5 text-xs rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="px-3 py-1.5 text-xs rounded-full bg-red-500 text-white hover:bg-red-600"
-                      >
-                        Hapus
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-800">
-                {editingId ? 'Edit Produk' : 'Tambah Produk'}
-              </h2>
-              <button
-                onClick={handleCloseModal}
-                className="text-slate-500 hover:text-slate-700"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-5">
-              <div>
-                <label className="block text-slate-600 font-semibold text-sm mb-2">Tambah Jenis Bordir</label>
-                <input
-                  type="text"
-                  value={formData.jenisBordir}
-                  onChange={(e) => setFormData({ ...formData, jenisBordir: e.target.value })}
-                  className={`w-full border ${errors.jenisBordir ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-2.5`}
-                />
-                {errors.jenisBordir && <p className="text-red-500 text-xs mt-1">{errors.jenisBordir}</p>}
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold text-sm mb-2">Tambah Ukuran Bordir</label>
-                <input
-                  type="text"
-                  value={formData.ukuranBordir}
-                  onChange={(e) => setFormData({ ...formData, ukuranBordir: e.target.value })}
-                  className={`w-full border ${errors.ukuranBordir ? 'border-red-500' : 'border-slate-300'} rounded-xl px-4 py-2.5`}
-                />
-                {errors.ukuranBordir && <p className="text-red-500 text-xs mt-1">{errors.ukuranBordir}</p>}
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold text-sm mb-2">Tambah Foto Portofolio</label>
-                <div className="border border-dashed border-slate-300 rounded-xl p-4 sm:p-6 text-center relative">
-                  {imagePreview ? (
-                    <div className="relative">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="max-h-56 mx-auto rounded-lg object-contain"
-                      />
-                      <button
-                        type="button"
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                         onClick={() => {
-                          setSelectedImage(null);
-                          setImagePreview(null);
-                          setImageData(null);
+                          setEditingTypeId(item.id);
+                          setEditingTypeName(item.name);
                         }}
+                        className="text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-700"
                       >
-                        <Trash2 size={16} />
+                        <Pencil size={14} />
                       </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteType(item.id)}
+                      className="text-xs px-3 py-1 rounded-full bg-red-500 text-white"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">Ukuran Bordir</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <input
+              type="text"
+              value={newSizeLabel}
+              onChange={(e) => setNewSizeLabel(e.target.value)}
+              placeholder="Label (20-24 CM)"
+              className="border border-slate-300 rounded-xl px-4 py-2.5"
+            />
+            <input
+              type="number"
+              min={0}
+              step="0.1"
+              value={newSizeCm}
+              onChange={(e) => setNewSizeCm(e.target.value)}
+              placeholder="Ukuran cm"
+              className="border border-slate-300 rounded-xl px-4 py-2.5"
+            />
+            <button
+              onClick={handleAddSize}
+              className="bg-blue-600 text-white px-4 rounded-xl text-sm font-semibold hover:bg-blue-700"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+
+          {loading ? (
+            <p className="text-sm text-slate-500">Memuat...</p>
+          ) : sizes.length === 0 ? (
+            <p className="text-sm text-slate-500">Belum ada ukuran bordir.</p>
+          ) : (
+            <div className="space-y-2">
+              {sizes.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2"
+                >
+                  {editingSizeId === item.id ? (
+                    <div className="flex-1 flex gap-2 mr-2">
+                      <input
+                        value={editingSizeLabel}
+                        onChange={(e) => setEditingSizeLabel(e.target.value)}
+                        className="flex-1 border border-slate-300 rounded-md px-2 py-1"
+                      />
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={editingSizeCm}
+                        onChange={(e) => setEditingSizeCm(e.target.value)}
+                        className="w-24 border border-slate-300 rounded-md px-2 py-1"
+                      />
                     </div>
                   ) : (
-                    <>
-                      <div className="flex items-center justify-center mb-2">
-                        <Download className="text-blue-500" size={36} />
-                      </div>
-                      <p className="text-slate-700 font-semibold text-sm mb-1">Unggah Gambar Produk</p>
-                      <p className="text-slate-500 text-xs mb-1">PNG, JPG maksimal 5MB</p>
-                      <p className="text-slate-500 text-xs mb-3">Rekomendasi ukuran foto 800x600 pixel (4:3)</p>
-                      <label className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer inline-block">
-                        Pilih File
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleImageChange}
-                        />
-                      </label>
-                    </>
+                    <span className="text-sm text-slate-700">
+                      {item.label} ({Number(item.size_cm).toFixed(2)} cm)
+                    </span>
                   )}
+                  <div className="flex items-center gap-2">
+                    {editingSizeId === item.id ? (
+                      <button
+                        onClick={handleSaveSize}
+                        className="text-xs px-3 py-1 rounded-full bg-green-500 text-white"
+                      >
+                        Simpan
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setEditingSizeId(item.id);
+                          setEditingSizeLabel(item.label);
+                          setEditingSizeCm(item.size_cm);
+                        }}
+                        className="text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-700"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteSize(item.id)}
+                      className="text-xs px-3 py-1 rounded-full bg-red-500 text-white"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-
-            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
-              <button
-                onClick={handleCloseModal}
-                className="px-4 py-2 text-sm rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleSaveChanges}
-                className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors"
-              >
-                {editingId ? 'Simpan Perubahan' : 'Tambah Produk'}
-              </button>
-            </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

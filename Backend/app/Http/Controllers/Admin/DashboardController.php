@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\EmbroideryType;
 use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\User;
@@ -23,12 +24,9 @@ class DashboardController extends Controller
         $transactionsCount = Transaction::count();
         $revenueTotal = Transaction::where('status', 'paid')->sum(DB::raw('COALESCE((SELECT total_price FROM orders WHERE orders.id = transactions.order_id), 0)'));
 
-        $categories = Product::query()
-            ->whereNotNull('category')
-            ->where('category', '!=', '')
-            ->distinct()
-            ->orderBy('category')
-            ->pluck('category')
+        $categories = EmbroideryType::query()
+            ->orderBy('name')
+            ->pluck('name')
             ->values();
 
         $salesChart = Transaction::query()
@@ -75,22 +73,30 @@ class DashboardController extends Controller
 
     public function salesReport(Request $request)
     {
-        $period = intval($request->get('period', 30));
-        $from = now()->subDays($period)->startOfDay();
-
-        $totalTransactions = Transaction::where('created_at', '>=', $from)->count();
-        $totalRevenue = Transaction::where('status', 'paid')->where('paid_at', '>=', $from)->sum(DB::raw('COALESCE((SELECT total_price FROM orders WHERE orders.id = transactions.order_id), 0)'));
-
-        $productsSold = 0;
-        if (Schema::hasTable('order_items')) {
-            $productsSold = DB::table('order_items')
-                ->where('created_at', '>=', $from)
-                ->sum('quantity');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+        if ($startDate && $endDate) {
+            $from = now()->parse($startDate)->startOfDay();
+            $to = now()->parse($endDate)->endOfDay();
+        } else {
+            $period = intval($request->get('period', 30));
+            $from = now()->subDays($period)->startOfDay();
+            $to = now();
         }
+
+        $totalTransactions = Transaction::whereBetween('created_at', [$from, $to])->count();
+        $totalRevenue = Transaction::where('status', 'paid')
+            ->whereBetween('paid_at', [$from, $to])
+            ->sum(DB::raw('COALESCE((SELECT total_price FROM orders WHERE orders.id = transactions.order_id), 0)'));
+
+        $productsSold = DB::table('orders')
+            ->whereBetween('updated_at', [$from, $to])
+            ->where('status', 'confirmed')
+            ->sum('quantity');
 
         $salesChart = Transaction::query()
             ->where('status', 'paid')
-            ->where('paid_at', '>=', $from)
+            ->whereBetween('paid_at', [$from, $to])
             ->selectRaw('DATE(paid_at) as date, SUM(COALESCE((SELECT total_price FROM orders WHERE orders.id = transactions.order_id), 0)) as total')
             ->groupBy('date')
             ->orderBy('date')
@@ -100,7 +106,7 @@ class DashboardController extends Controller
         if (Schema::hasTable('order_items') && Schema::hasTable('products')) {
             $topProducts = DB::table('order_items')
                 ->join('products', 'products.id', '=', 'order_items.product_id')
-                ->where('order_items.created_at', '>=', $from)
+                ->whereBetween('order_items.created_at', [$from, $to])
                 ->selectRaw('products.id, products.name, SUM(order_items.quantity) as qty')
                 ->groupBy('products.id', 'products.name')
                 ->orderByDesc('qty')
@@ -111,7 +117,7 @@ class DashboardController extends Controller
         $topEmbroideryTypes = [];
         if (Schema::hasTable('orders')) {
             $topEmbroideryTypes = DB::table('orders')
-                ->where('created_at', '>=', $from)
+                ->whereBetween('created_at', [$from, $to])
                 ->selectRaw('embroidery_type, COUNT(*) as total')
                 ->whereNotNull('embroidery_type')
                 ->groupBy('embroidery_type')

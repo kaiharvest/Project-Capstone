@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
-    public function show() {
+public function show() {
 $all = Setting::all()->pluck('value','key')->toArray();
+$all['pricing_rules'] = Setting::getPricingRules();
 return response()->json($all);
 }
 
@@ -22,6 +23,7 @@ $data = $request->validate([
 'phone' => 'sometimes|string',
 'email' => 'sometimes|email',
 'payment_methods' => 'sometimes',
+'pricing_rules' => 'sometimes|array',
 'qris_image' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
 ]);
 
@@ -30,6 +32,10 @@ foreach ($data as $key => $value) {
     if ($key === 'payment_methods') {
         $encoded = is_array($value) ? json_encode($value) : $value;
         Setting::updateOrCreate(['key'=>$key], ['value'=>$encoded]);
+        continue;
+    }
+    if ($key === 'pricing_rules') {
+        Setting::setPricingRules($value);
         continue;
     }
     if ($key === 'qris_image') {

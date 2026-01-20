@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -11,17 +11,18 @@ import {
   BarChart3,
   TrendingUp,
   DollarSign,
+  Eye,
   FileCheck,
   Trash2,
   Download
 } from 'lucide-react';
 import api from '../../services/api';
 
-const STATUS_OPTIONS = [
-  { label: 'Menunggu', value: 'pending' },
-  { label: 'Proses', value: 'processing' },
-  { label: 'Selesai', value: 'confirmed' }
-];
+const STATUS_LABELS = {
+  pending: 'Menunggu',
+  processing: 'Diproses',
+  confirmed: 'Selesai'
+};
 
 // Sidebar Component
 const Sidebar = ({ activeMenu, setActiveMenu }) => {
@@ -254,12 +255,16 @@ const StatusBarangPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [estimateInputs, setEstimateInputs] = useState({});
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('newest');
 
   useEffect(() => {
     let isMounted = true;
     const fetchOrders = async () => {
       try {
-        const response = await api.get('/admin/orders');
+        const response = await api.get('/admin/orders', {
+          params: statusFilter === 'all' ? {} : { status: statusFilter }
+        });
         const items = response.data.data || [];
         if (!isMounted) return;
         setOrders(items);
@@ -281,21 +286,7 @@ const StatusBarangPage = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  const handleStatusChange = async (orderId, status) => {
-    try {
-      await api.post(`/admin/orders/${orderId}/status`, { status });
-      setOrders((prev) =>
-        prev.map((order) =>
-          order.id === orderId ? { ...order, status } : order
-        )
-      );
-    } catch (error) {
-      console.error('Gagal update status pesanan:', error);
-      alert('Gagal update status pesanan.');
-    }
-  };
+  }, [statusFilter]);
 
   const handleEstimateSave = async (orderId) => {
     const dateValue = estimateInputs[orderId];
@@ -359,11 +350,48 @@ const StatusBarangPage = () => {
     return parts.filter(Boolean).join(', ');
   };
 
+  const sortedOrders = useMemo(() => {
+    const list = [...orders];
+    list.sort((a, b) => {
+      const aDate = new Date(a?.created_at || 0).getTime();
+      const bDate = new Date(b?.created_at || 0).getTime();
+      return sortOrder === 'newest' ? bDate - aDate : aDate - bDate;
+    });
+    return list;
+  }, [orders, sortOrder]);
+
   return (
     <div className="p-4 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
         <Box className="text-blue-900" size={26} />
         <h1 className="text-2xl font-bold text-blue-900">Status Barang</h1>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-600">Filter</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700"
+          >
+            <option value="all">Semua</option>
+            <option value="pending">Menunggu</option>
+            <option value="processing">Diproses</option>
+            <option value="confirmed">Selesai</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-600">Urutkan</span>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700"
+          >
+            <option value="newest">Terbaru</option>
+            <option value="oldest">Terlama</option>
+          </select>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -373,7 +401,7 @@ const StatusBarangPage = () => {
         {!loading && orders.length === 0 && (
           <div className="text-sm text-slate-500">Belum ada pesanan.</div>
         )}
-        {orders.map((order) => (
+        {sortedOrders.map((order) => (
           <div key={order.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5">
             <div className="grid grid-cols-1 md:grid-cols-8 gap-3 md:gap-4 text-xs text-slate-700 mb-4">
               <div>{order.order_number || `#${order.id}`}</div>
@@ -387,6 +415,12 @@ const StatusBarangPage = () => {
               </div>
               <div className="flex items-start justify-end gap-2">
                 <button
+                  className="w-6 h-6 rounded bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600"
+                  onClick={() => handleOpenProof(order.id)}
+                >
+                  <Eye size={14} />
+                </button>
+                <button
                   className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700"
                   onClick={() => handleOpenDesign(order.id)}
                 >
@@ -398,24 +432,9 @@ const StatusBarangPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
               <div className="border border-slate-200 rounded-lg px-3 py-2 flex items-center gap-3">
                 <span className="text-xs font-semibold text-slate-600">Status</span>
-                <div className="flex gap-2 flex-1">
-                  {STATUS_OPTIONS.map((option) => {
-                    const isActive = order.status === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        onClick={() => handleStatusChange(order.id, option.value)}
-                        className={`flex-1 text-xs font-semibold py-1.5 rounded-md ${
-                          isActive
-                            ? 'bg-amber-400 text-white hover:bg-amber-500'
-                            : 'bg-slate-200 text-slate-500 hover:bg-slate-300'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1 rounded-md">
+                  {STATUS_LABELS[order.status] || order.status}
+                </span>
               </div>
 
               <div className="border border-slate-200 rounded-lg px-3 py-2">

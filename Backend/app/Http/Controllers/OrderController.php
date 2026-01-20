@@ -18,6 +18,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $this->autoCompleteOrders($user->id);
 
         $query = Order::where('user_id', $user->id);
 
@@ -309,6 +310,41 @@ class OrderController extends Controller
     }
 
     /**
+     * Checkout beberapa pesanan dari keranjang sekaligus
+     */
+    public function checkoutBatch(Request $request)
+    {
+        $user = Auth::user();
+        $data = $request->validate([
+            'order_ids' => 'required|array|min:1',
+            'order_ids.*' => 'integer',
+        ]);
+
+        $orders = Order::whereIn('id', $data['order_ids'])
+            ->where('user_id', $user->id)
+            ->where('order_type', 'cart')
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return response()->json([
+                'message' => 'Tidak ada pesanan yang bisa di-checkout.'
+            ], 400);
+        }
+
+        Order::whereIn('id', $orders->pluck('id'))
+            ->update([
+                'status' => 'pending',
+                'order_type' => 'now'
+            ]);
+
+        return response()->json([
+            'message' => 'Pesanan berhasil di-checkout.',
+            'orders' => $orders->values(),
+            'total_price' => (int) $orders->sum('total_price'),
+        ]);
+    }
+
+    /**
      * Upload bukti pembayaran
      */
     public function uploadPaymentProof(Request $request, $id)
@@ -351,15 +387,15 @@ class OrderController extends Controller
             }
 
             // Simpan bukti pembayaran baru
-            $fileName = 'payment_proofs/' . uniqid() . '_' . $request->file('payment_proof')->getClientOriginalName();
-            $path = $request->file('payment_proof')->storeAs('public', $fileName);
+            $fileName = uniqid() . '_' . $request->file('payment_proof')->getClientOriginalName();
+            $path = $request->file('payment_proof')->storeAs('payment_proofs', $fileName, 'public');
 
             // Update order dengan path bukti pembayaran
             $order->update([
-                'payment_proof_path' => str_replace('public/', '', $path),
+                'payment_proof_path' => $path,
                 'payment_proof_uploaded_at' => now(),
                 'payment_status' => 'pending', // Menunggu verifikasi
-                'status' => 'processing' // Ubah status pesanan ke processing
+                'status' => 'pending' // Tetap menunggu sampai admin approve
             ]);
 
             $allowedMethods = ['transfer', 'cash', 'ewallet'];
@@ -379,6 +415,72 @@ class OrderController extends Controller
         return response()->json([
             'message' => 'Payment proof uploaded successfully',
             'data' => $order
+        ]);
+    }
+
+    /**
+     * Upload bukti pembayaran untuk beberapa pesanan sekaligus
+     */
+    public function uploadPaymentProofBatch(Request $request)
+    {
+        $user = Auth::user();
+
+        $validator = Validator::make($request->all(), [
+            'order_ids' => 'required|array|min:1',
+            'order_ids.*' => 'integer',
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'payment_method' => 'sometimes|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $orders = Order::whereIn('id', $request->input('order_ids'))
+            ->where('user_id', $user->id)
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return response()->json([
+                'message' => 'Tidak ada pesanan yang ditemukan.'
+            ], 404);
+        }
+
+        $fileName = uniqid() . '_' . $request->file('payment_proof')->getClientOriginalName();
+        $path = $request->file('payment_proof')->storeAs('payment_proofs', $fileName, 'public');
+
+        $allowedMethods = ['transfer', 'cash', 'ewallet'];
+        $methodInput = $request->input('payment_method', 'transfer');
+        $normalizedMethod = in_array($methodInput, $allowedMethods, true) ? $methodInput : 'transfer';
+
+        foreach ($orders as $order) {
+            if ($order->status !== 'pending') {
+                continue;
+            }
+
+            $order->update([
+                'payment_proof_path' => $path,
+                'payment_proof_uploaded_at' => now(),
+                'payment_status' => 'pending',
+                'status' => 'pending'
+            ]);
+
+            Transaction::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'payment_method' => $normalizedMethod,
+                    'status' => 'pending',
+                    'paid_at' => null
+                ]
+            );
+        }
+
+        return response()->json([
+            'message' => 'Payment proof uploaded successfully',
+            'order_ids' => $orders->pluck('id')->values()
         ]);
     }
 
@@ -403,15 +505,20 @@ class OrderController extends Controller
             ], 404);
         }
 
-        $path = storage_path('app/public/' . $order->payment_proof_path);
+        $candidates = [
+            storage_path('app/public/' . $order->payment_proof_path),
+            storage_path('app/' . $order->payment_proof_path),
+        ];
 
-        if (!file_exists($path)) {
-            return response()->json([
-                'message' => 'File payment proof not found'
-            ], 404);
+        foreach ($candidates as $path) {
+            if ($path && file_exists($path)) {
+                return response()->download($path);
+            }
         }
 
-        return response()->download($path);
+        return response()->json([
+            'message' => 'File payment proof not found'
+        ], 404);
     }
 
     /**
@@ -571,7 +678,7 @@ class OrderController extends Controller
                     'jaket' => 1.3,
                     'tas' => 1.2
                 ],
-                'shipping_cost' => 20000
+                'shipping_cost' => 0
             ];
         }
 
@@ -592,5 +699,14 @@ class OrderController extends Controller
         $total = $price + $shippingCost;
 
         return (int) $total;
+    }
+
+    private function autoCompleteOrders(int $userId): void
+    {
+        Order::where('user_id', $userId)
+            ->where('status', 'processing')
+            ->whereNotNull('estimated_completion_date')
+            ->whereDate('estimated_completion_date', '<=', now()->toDateString())
+            ->update(['status' => 'confirmed']);
     }
 }

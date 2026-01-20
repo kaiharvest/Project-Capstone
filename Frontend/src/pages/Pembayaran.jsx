@@ -9,6 +9,8 @@ export default function Pembayaran() {
   const [qrisImage, setQrisImage] = useState("");
   const [qrisError, setQrisError] = useState("");
   const [order, setOrder] = useState(null);
+  const [orderIds, setOrderIds] = useState([]);
+  const [batchTotal, setBatchTotal] = useState(0);
 
   const [paymentMethod, setPaymentMethod] = useState("");
   const [proofFile, setProofFile] = useState(null);
@@ -46,6 +48,19 @@ export default function Pembayaran() {
   useEffect(() => {
     let cancelled = false;
     const orderId = localStorage.getItem("current_order_id");
+    const storedBatch = localStorage.getItem("current_order_ids");
+    if (storedBatch) {
+      try {
+        const ids = JSON.parse(storedBatch) || [];
+        if (Array.isArray(ids) && ids.length > 0) {
+          setOrderIds(ids);
+          setBatchTotal(Number(localStorage.getItem("current_order_total")) || 0);
+          return;
+        }
+      } catch {
+        // ignore parse errors
+      }
+    }
     if (!orderId) return;
     const fetchOrder = async () => {
       try {
@@ -98,18 +113,29 @@ export default function Pembayaran() {
     setSubmitting(true);
     try {
       if (!order) {
-        throw new Error("Data pesanan belum ada. Silakan isi form pemesanan.");
+        if (!orderIds.length) {
+          throw new Error("Data pesanan belum ada. Silakan isi form pemesanan.");
+        }
       }
 
       const formData = new FormData();
       formData.append("payment_proof", proofFile);
       formData.append("payment_method", normalizedMethod);
 
-      await api.post(`/orders/${order.id}/upload-payment-proof`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      if (orderIds.length > 0) {
+        orderIds.forEach((id) => formData.append("order_ids[]", id));
+        await api.post(`/orders/upload-payment-proof-batch`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        await api.post(`/orders/${order.id}/upload-payment-proof`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
 
       localStorage.removeItem("current_order_id");
+      localStorage.removeItem("current_order_ids");
+      localStorage.removeItem("current_order_total");
       navigate("/pesanan");
     } catch (e) {
       setSubmitError(e?.message || "Terjadi kesalahan saat mengirim pesanan.");
@@ -119,7 +145,8 @@ export default function Pembayaran() {
   }
 
   const showQris = paymentMethod === "QRIS";
-  const totalToPay = order?.total_price || 0;
+  const totalToPay =
+    orderIds.length > 0 ? batchTotal : order?.total_price || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-6">

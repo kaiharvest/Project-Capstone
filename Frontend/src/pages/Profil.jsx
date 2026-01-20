@@ -32,10 +32,22 @@ const Profil = () => {
     };
   }, []);
 
-  const mapLink = profile.google_maps_link || "https://www.google.com/maps";
+  const mapLink = useMemo(() => {
+    const raw = (profile.google_maps_link || "").trim();
+    const address = (profile.address || "").trim();
+    const withScheme = raw && !raw.startsWith("http") ? `https://${raw}` : raw;
+    if (withScheme && withScheme.includes("maps")) {
+      return withScheme;
+    }
+    const query = encodeURIComponent(address || "Purwodadi, Jawa Tengah");
+    return `https://www.google.com/maps?q=${query}`;
+  }, [profile.google_maps_link, profile.address]);
+
   const mapEmbedLink = useMemo(() => {
     if (!mapLink) return "";
-    if (mapLink.includes("output=embed")) return mapLink;
+    if (mapLink.includes("output=embed") || mapLink.includes("/maps/embed")) {
+      return mapLink;
+    }
     const joiner = mapLink.includes("?") ? "&" : "?";
     return `${mapLink}${joiner}output=embed`;
   }, [mapLink]);

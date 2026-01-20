@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Users, Box, ShoppingCart, DollarSign } from "lucide-react";
+import api from "../../services/api";
 
 const MONTH_LABELS = [
   "Jan",
@@ -16,27 +17,6 @@ const MONTH_LABELS = [
   "Des",
 ];
 
-const DUMMY_DASHBOARD = {
-  users_count: 257,
-  transactions_count: 67,
-  revenue_total: 200000000,
-  categories: ["Bordir Seragam", "Bordir Emblem", "Bordir Topi", "Bordir Jaket", "Bordir Tas"],
-  sales_chart: [
-    { year: 2025, month: "Jan", total: 8000000 },
-    { year: 2025, month: "Feb", total: 15000000 },
-    { year: 2025, month: "Mar", total: 11000000 },
-    { year: 2025, month: "Apr", total: 20000000 },
-    { year: 2025, month: "Mei", total: 9000000 },
-    { year: 2025, month: "Jun", total: 18000000 },
-    { year: 2025, month: "Jul", total: 12000000 },
-    { year: 2025, month: "Agu", total: 22000000 },
-    { year: 2025, month: "Sep", total: 10000000 },
-    { year: 2025, month: "Okt", total: 19000000 },
-    { year: 2025, month: "Nov", total: 13000000 },
-    { year: 2025, month: "Des", total: 24000000 },
-  ],
-};
-
 const BerandaAdmin = () => {
   const [stats, setStats] = useState({
     users_count: 0,
@@ -46,42 +26,62 @@ const BerandaAdmin = () => {
     sales_chart: [],
   });
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState("2025");
+  const [selectedYear, setSelectedYear] = useState("");
 
   useEffect(() => {
-    setStats(DUMMY_DASHBOARD);
-    setLoading(false);
+    let isMounted = true;
+    const fetchSummary = async () => {
+      setLoading(true);
+      try {
+        const response = await api.get("/admin/dashboard", {
+          params: { period: 365 },
+        });
+        if (!isMounted) return;
+        setStats(response.data || {});
+      } catch (error) {
+        console.error("Gagal memuat dashboard:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchSummary();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const chartData = useMemo(() => {
-    return (stats.sales_chart || []).map((item) => {
-      if (item.month) {
-        return {
-          label: item.month,
-          total: Number(item.total) || 0,
-          year: Number(item.year) || 0,
-        };
-      }
+    const data = stats.sales_chart || [];
+    const grouped = {};
+    data.forEach((item) => {
+      if (!item.date) return;
       const date = new Date(item.date);
-      const label = date.toLocaleDateString("id-ID", {
-        month: "short",
-        day: "2-digit",
-      });
+      const year = date.getFullYear();
+      const monthIndex = date.getMonth();
+      const key = `${year}-${monthIndex}`;
+      grouped[key] = (grouped[key] || 0) + (Number(item.total) || 0);
+    });
+    return Object.entries(grouped).map(([key, total]) => {
+      const [year, monthIndex] = key.split("-").map(Number);
       return {
-        label,
-        total: Number(item.total) || 0,
-        year: date.getFullYear(),
+        label: MONTH_LABELS[monthIndex],
+        total,
+        year,
+        monthIndex,
       };
     });
   }, [stats.sales_chart]);
 
   const yearOptions = useMemo(() => {
-    return [2025];
-  }, []);
+    const years = new Set();
+    chartData.forEach((item) => years.add(item.year));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [chartData]);
 
   useEffect(() => {
-    if (!selectedYear) {
-      setSelectedYear("2025");
+    if (!selectedYear && yearOptions.length > 0) {
+      setSelectedYear(String(yearOptions[0]));
     }
   }, [yearOptions, selectedYear]);
 
@@ -90,22 +90,19 @@ const BerandaAdmin = () => {
     const targetYear = Number(selectedYear);
     const byYear = chartData.filter((item) => item.year === targetYear);
     if (byYear.length === 0) return [];
-    const sorted = [...byYear].sort(
-      (a, b) => MONTH_LABELS.indexOf(a.label) - MONTH_LABELS.indexOf(b.label)
-    );
+    const sorted = [...byYear].sort((a, b) => a.monthIndex - b.monthIndex);
     return sorted;
   }, [chartData, selectedYear]);
 
   const displayChartData = useMemo(() => {
     if (filteredChartData.length > 0) return filteredChartData;
-    const fallbackYear = 2025;
-    const fallbackTotals = [
-      14, 11, 16, 12, 13, 17, 15, 13, 19, 16, 14, 20,
-    ];
+    if (!selectedYear) return [];
+    const fallbackYear = Number(selectedYear);
     return MONTH_LABELS.map((label, index) => ({
       label,
-      total: fallbackTotals[index] || 0,
+      total: 0,
       year: fallbackYear,
+      monthIndex: index,
     }));
   }, [filteredChartData, selectedYear]);
 
@@ -137,7 +134,7 @@ const BerandaAdmin = () => {
             <div className="bg-cyan-200 p-3 rounded-full">
               <Box className="text-cyan-600" size={24} />
             </div>
-            <p className="text-sm text-cyan-600">Kategori Bordir</p>
+            <p className="text-sm text-cyan-600">Jenis Bordir</p>
           </div>
           <p className="text-4xl font-bold text-cyan-900">
             {loading ? "..." : stats.categories.length}

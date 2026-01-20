@@ -31,6 +31,17 @@ export default function Footer() {
     };
   }, []);
 
+  const mapLink = (() => {
+    const raw = (profile.google_maps_link || "").trim();
+    const address = (profile.address || "").trim();
+    const withScheme = raw && !raw.startsWith("http") ? `https://${raw}` : raw;
+    if (withScheme && withScheme.includes("maps")) {
+      return withScheme;
+    }
+    const query = encodeURIComponent(address || "Purwodadi, Jawa Tengah");
+    return `https://www.google.com/maps?q=${query}`;
+  })();
+
   return (
     <footer className="bg-[#010E31] text-white">
       {/* Bar Atas */}
@@ -77,7 +88,7 @@ export default function Footer() {
           <p className="text-sm">
             <span className="opacity-50">Kunjungi Workshop Kami : </span>
             <a
-              href={profile.google_maps_link || "#"}
+              href={mapLink}
               className="text-white"
               target="_blank"
               rel="noopener noreferrer"

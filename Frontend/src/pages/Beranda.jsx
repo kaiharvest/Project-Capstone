@@ -1,7 +1,8 @@
 // src/components/Hero.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MoreHorizontal } from "lucide-react";
+import api from "../services/api";
 
 // icons
 import leftArrow from "../assets/icons/left.svg";
@@ -19,22 +20,11 @@ import emblem from "../assets/icons/emblem.svg";
 import jaket from "../assets/icons/jaket.svg";
 import tas from "../assets/icons/tas.svg";
 
-// portofolio
-import porto from "../assets/portofolio/porto.png";
-import porto1 from "../assets/portofolio/porto1.png";
-import porto2 from "../assets/portofolio/porto2.png";
-import porto3 from "../assets/portofolio/porto3.png";
-import porto4 from "../assets/portofolio/porto4.png";
-import porto5 from "../assets/portofolio/porto5.png";
-import porto6 from "../assets/portofolio/porto6.png";
-import porto7 from "../assets/portofolio/porto7.png";
-
-
-
 export default function Beranda() {
   const images = [bg1, bg2, bg3];
   const [index, setIndex] = useState(0);
   const [fade, setFade] = useState(false);
+  const [portfolioPhotos, setPortfolioPhotos] = useState([]);
 
   const nextImage = () => {
     setFade(true);
@@ -58,6 +48,29 @@ export default function Beranda() {
     }, 3000);
 
     return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPortfolio = async () => {
+      try {
+        const response = await api.get("/portfolio-photos");
+        if (!isMounted) return;
+        setPortfolioPhotos(response.data.data || []);
+      } catch (error) {
+        console.error("Gagal memuat portofolio:", error);
+      }
+    };
+
+    fetchPortfolio();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const storageBaseUrl = useMemo(() => {
+    const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+    return base.replace(/\/api$/, "");
   }, []);
 
   return (
@@ -205,29 +218,26 @@ export default function Beranda() {
         </div>
 
         <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-            {[
-              porto,
-              porto1,
-              porto2,
-              porto3,
-              porto4,
-              porto5,
-              porto6,
-              porto7,
-            ].map((img, i) => (
+          {portfolioPhotos.length === 0 ? (
+            <div className="col-span-full text-center text-sm text-white/80">
+              Belum ada foto portofolio.
+            </div>
+          ) : (
+            portfolioPhotos.slice(0, 8).map((item) => (
               <div
-                key={i}
+                key={item.id}
                 className="relative rounded-2xl overflow-hidden aspect-[4/3]"
               >
                 <img
-                  src={img}
-                  alt={`Portofolio ${i + 1}`}
+                  src={`${storageBaseUrl}/storage/${encodeURI(item.image_path)}`}
+                  alt="Portofolio"
                   className="w-full h-full object-cover block"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
               </div>
-            ))}
-          </div>
+            ))
+          )}
+        </div>
 
         <div className="flex justify-center mt-8 sm:mt-10">
           <Link

@@ -26,8 +26,8 @@ $data = $request->validate(['status'=>'required|in:pending,paid,failed']);
 $transaction->update(['status'=>$data['status']]);
 if ($data['status'] === 'paid') {
 $transaction->update(['paid_at' => now()]);
-// optional: mark order completed
-$transaction->order->update(['status'=>'completed']);
+// Order masuk proses setelah transaksi di-approve
+$transaction->order->update(['status'=>'processing']);
 }
 return response()->json(['message'=>'Status updated','transaction'=>$transaction]);
 }

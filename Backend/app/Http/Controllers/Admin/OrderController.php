@@ -13,6 +13,7 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
+        $this->autoCompleteOrders();
         $query = Order::with(['user', 'transaction']); // Include user and transaction information
 
         // Filter by status if provided
@@ -153,20 +154,24 @@ class OrderController extends Controller
             ], 404);
         }
 
-        $path = null;
+        $paths = [];
         if ($order->payment_proof_path) {
-            $path = storage_path('app/public/' . $order->payment_proof_path);
-        } elseif ($order->proof_image) {
-            $path = storage_path('app/public/proofs/' . $order->proof_image);
+            $paths[] = storage_path('app/public/' . $order->payment_proof_path);
+            $paths[] = storage_path('app/' . $order->payment_proof_path);
+        }
+        if ($order->proof_image) {
+            $paths[] = storage_path('app/public/proofs/' . $order->proof_image);
         }
 
-        if (!$path || !file_exists($path)) {
-            return response()->json([
-                'message' => 'File bukti pemesanan tidak ditemukan.',
-            ], 404);
+        foreach ($paths as $path) {
+            if ($path && file_exists($path)) {
+                return response()->download($path);
+            }
         }
 
-        return response()->download($path);
+        return response()->json([
+            'message' => 'File bukti pemesanan tidak ditemukan.',
+        ], 404);
     }
 
     /**
@@ -191,5 +196,13 @@ class OrderController extends Controller
         }
 
         return response()->download($path);
+    }
+
+    private function autoCompleteOrders(): void
+    {
+        Order::where('status', 'processing')
+            ->whereNotNull('estimated_completion_date')
+            ->whereDate('estimated_completion_date', '<=', now()->toDateString())
+            ->update(['status' => 'confirmed']);
     }
 }

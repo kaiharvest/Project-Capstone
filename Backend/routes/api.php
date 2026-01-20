@@ -40,11 +40,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('orders', OrderController::class);
     Route::post('/orders/estimate', [OrderController::class, 'estimate']);
     Route::post('/orders/{id}/checkout-from-cart', [OrderController::class, 'checkoutFromCart']);
+    Route::post('/orders/checkout-batch', [OrderController::class, 'checkoutBatch']);
     Route::post('/orders/{id}/upload-proof', [OrderController::class, 'uploadProof']);
     Route::get('/orders/{id}/proof', [OrderController::class, 'showProof']);
     Route::post('/orders/{id}/upload-design-image', [OrderController::class, 'uploadDesignImage']);
     Route::get('/orders/{id}/design-image', [OrderController::class, 'showDesignImage']);
     Route::post('/orders/{id}/upload-payment-proof', [OrderController::class, 'uploadPaymentProof']);
+    Route::post('/orders/upload-payment-proof-batch', [OrderController::class, 'uploadPaymentProofBatch']);
     Route::get('/orders/{id}/payment-proof', [OrderController::class, 'showPaymentProof']);
 });
 
