@@ -2,16 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import api from "../services/api";
 
-// import gambar
-import porto from "../assets/portofolio/porto.png";
-import porto1 from "../assets/portofolio/porto1.png";
-import porto2 from "../assets/portofolio/porto2.png";
-import porto3 from "../assets/portofolio/porto3.png";
-import porto4 from "../assets/portofolio/porto4.png";
-import porto5 from "../assets/portofolio/porto5.png";
-import porto6 from "../assets/portofolio/porto6.png";
-import porto7 from "../assets/portofolio/porto7.png";
-
 export default function Portofolio() {
   const location = useLocation();
   const [portfolioPhotos, setPortfolioPhotos] = useState([]);
@@ -44,25 +34,6 @@ export default function Portofolio() {
     const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
     return base.replace(/\/api$/, "");
   }, []);
-  const portofolioImages = [
-    porto,
-    porto1,
-    porto2,
-    porto3,
-    porto4,
-    porto5,
-    porto6,
-    porto7,
-    porto,
-    porto1,
-    porto2,
-    porto3,
-    porto4,
-    porto5,
-    porto6,
-    porto7,
-  ];
-
   return (
     <>
       {/* ===== SECTION PORTOFOLIO ===== */}
@@ -80,44 +51,24 @@ export default function Portofolio() {
 
           {/* Grid Portofolio */}
           <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {portfolioPhotos.map((item) => (
-              <div
-                key={item.id}
-                className="relative rounded-2xl overflow-hidden aspect-[4/3]"
-              >
-                <img
-                  src={
-                    item.image_path
-                      ? `${storageBaseUrl}/storage/${encodeURI(item.image_path)}`
-                      : porto
-                  }
-                  alt={item.title || "Portofolio"}
-                  className="w-full h-full object-cover block"
-                />
+            {portfolioPhotos.length === 0 ? (
+              <div className="col-span-full text-center text-sm text-slate-500">
+                Belum ada foto portofolio.
               </div>
-            ))}
-            {[
-              porto,
-              porto1,
-              porto2,
-              porto3,
-              porto4,
-              porto5,
-              porto6,
-              porto7,
-            ].map((img, i) => (
-              <div
-                key={i}
-                className="relative rounded-2xl overflow-hidden aspect-[4/3]"
-              >
-                <img
-                  src={img}
-                  alt={`Portofolio ${i + 1}`}
-                  className="w-full h-full object-cover block"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-              </div>
-            ))}
+            ) : (
+              portfolioPhotos.map((item) => (
+                <div
+                  key={item.id}
+                  className="relative rounded-2xl overflow-hidden aspect-[4/3]"
+                >
+                  <img
+                    src={`${storageBaseUrl}/storage/${encodeURI(item.image_path)}`}
+                    alt="Portofolio"
+                    className="w-full h-full object-cover block"
+                  />
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
